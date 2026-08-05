@@ -13,7 +13,11 @@ services:
 
     # Roda da raiz do repositório: o pnpm precisa do workspace inteiro para
     # resolver @iris/shared, que a API importa.
-    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @iris/api build
+    #
+    # --prod=false é obrigatório: com NODE_ENV=production o pnpm pula as
+    # devDependencies, e o build precisa de typescript e @types/node.
+    # O runtime não precisa delas — só a compilação.
+    buildCommand: pnpm install --frozen-lockfile --prod=false && pnpm --filter @iris/api build
     startCommand: pnpm --filter @iris/api start
 
     healthCheckPath: /health
