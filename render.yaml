@@ -1,0 +1,46 @@
+# Blueprint do Render para a API (apps/api).
+# O front-end não entra aqui — ele fica na Vercel, via vercel.json na raiz.
+#
+# Uso: no Render, New → Blueprint → aponte para este repositório.
+# As variáveis marcadas com `sync: false` são pedidas na hora do deploy e
+# ficam guardadas no Render, nunca no repositório.
+services:
+  - type: web
+    name: iris-api
+    runtime: node
+    plan: free
+    region: oregon
+
+    # Roda da raiz do repositório: o pnpm precisa do workspace inteiro para
+    # resolver @iris/shared, que a API importa.
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @iris/api build
+    startCommand: pnpm --filter @iris/api start
+
+    healthCheckPath: /health
+
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+
+      - key: NODE_ENV
+        value: production
+
+      # Supabase — Settings → API Keys
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      # Segredo: ignora RLS. Só aqui, nunca no front-end.
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+
+      # URL exata do site na Vercel, com https:// e sem barra no final.
+      # Errar aqui faz o navegador bloquear todas as chamadas por CORS.
+      - key: WEB_ORIGIN
+        sync: false
+
+      # Para onde o e-mail de recuperação de senha leva o usuário.
+      - key: PASSWORD_RESET_REDIRECT_URL
+        sync: false
+
+# PORT não é declarada: o Render injeta a dele e apps/api/src/env.ts já a lê.

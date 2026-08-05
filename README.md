@@ -83,6 +83,27 @@ Em produção o cookie usa `secure` + `SameSite=None`, então **a API precisa es
 Se front e API ficarem no mesmo domínio, troque para `SameSite=Lax` em
 `apps/api/src/lib/session-cookie.ts`.
 
+## Deploy
+
+O front e a API vão para hosts diferentes — a Vercel não roda servidor Node persistente.
+
+**Front (`apps/web`) → Vercel.** O `vercel.json` da raiz já define build e output;
+importe o repositório sem alterar o Root Directory. Uma única variável de ambiente:
+
+- `VITE_API_URL` — URL pública da API
+
+Variável com prefixo `VITE_` é embutida no bundle que vai ao navegador. Nunca coloque
+chave secreta ali.
+
+**API (`apps/api`) → Render.** O `render.yaml` da raiz é um Blueprint: em New → Blueprint,
+aponte para o repositório e o Render pede os valores de `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY`, `WEB_ORIGIN` e `PASSWORD_RESET_REDIRECT_URL`.
+
+`WEB_ORIGIN` precisa ser exatamente a URL da Vercel, com `https://` e sem barra final,
+ou o navegador bloqueia as chamadas por CORS. `NODE_ENV=production` é o que liga
+`Secure` + `SameSite=None` no cookie de refresh, necessário porque front e API ficam
+em domínios distintos — e por isso a API tem que estar sob HTTPS.
+
 ## Estado atual
 
 Autenticação está de fato persistida no Supabase. Agentes, configurações e mensagens
