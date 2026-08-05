@@ -1,0 +1,134 @@
+:root {
+  --iris-bg: #0b0910;
+  --iris-text: #f4eef6;
+  --iris-accent: #f249a0;
+  --iris-accent-hover: #ff6fb8;
+  --iris-muted: #b0a2ba;
+  --iris-dim: #7c8894;
+  --iris-border: rgba(255, 255, 255, 0.08);
+  --iris-font-body: "Space Grotesk", sans-serif;
+  --iris-font-display: "Orbitron", sans-serif;
+  --iris-font-mono: "IBM Plex Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--iris-bg);
+  color: var(--iris-text);
+  font-family: var(--iris-font-body);
+}
+
+a {
+  color: var(--iris-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--iris-accent-hover);
+}
+
+button {
+  font-family: inherit;
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+  color: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--iris-dim);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+}
+
+@keyframes iris-float-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes iris-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes iris-blink {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes iris-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.iris-nav-item {
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.iris-nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.iris-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.iris-agent-card {
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.35s ease;
+}
+
+.iris-agent-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 30px 60px -20px #000, 0 0 40px -8px rgba(242, 73, 160, 0.45);
+}
+
+.iris-button-primary {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.iris-button-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 34px -10px rgba(242, 73, 160, 0.6);
+}
+
+.iris-button-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
