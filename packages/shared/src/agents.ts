@@ -14,7 +14,7 @@ export interface Agent {
   active: boolean;
   vpsAddress: string | null;
   lastRunAt: string | null;
-  tasksDone: number;
+  conversations: number;
 }
 
 export const designSystemComponentSchema = z.object({

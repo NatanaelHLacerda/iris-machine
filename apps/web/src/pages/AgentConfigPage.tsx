@@ -1,12 +1,10 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { agentConfigSchema, type Agent, type AgentConfig } from "@iris/shared";
 import { ZodError } from "zod";
 import { agentsApi } from "@/features/agents/agents-api";
 import { ApiRequestError } from "@/lib/api";
-import { Alert, Button, Field, SectionTitle, cardStyle, inputStyle } from "@/components/ui";
 import { FullScreenLoader } from "@/components/FullScreenLoader";
-import { colors, fonts, radii } from "@/styles/theme";
 
 interface FormState extends Omit<AgentConfig, "githubToken"> {
   githubTokenInput: string;
@@ -41,19 +39,67 @@ const emptyForm: FormState = {
   notes: "",
 };
 
-const selectStyle = { ...inputStyle, padding: "10px 12px", fontSize: 13.5 };
+const cardStyle = {
+  borderRadius: 14,
+  border: "1px solid rgba(255,255,255,0.08)",
+  background: "rgba(255,255,255,0.02)",
+  padding: 20,
+  display: "flex",
+  flexDirection: "column",
+  gap: 16,
+} as const;
 
-function Select({
-  value,
-  onChange,
-  options,
+const sectionLabelStyle = {
+  fontFamily: "'IBM Plex Mono', monospace",
+  fontSize: 11,
+  letterSpacing: "0.08em",
+  color: "#F249A0",
+} as const;
+
+const inputStyle = {
+  padding: "11px 14px",
+  borderRadius: 9,
+  border: "1px solid rgba(255,255,255,0.12)",
+  background: "rgba(255,255,255,0.03)",
+  color: "#F4EEF6",
+  fontSize: 14,
+  width: "100%",
+} as const;
+
+const smallInputStyle = { ...inputStyle, padding: "10px 12px", fontSize: 13.5 } as const;
+
+function Label({
+  text,
+  hint,
+  error,
+  required,
+  children,
 }: {
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
+  text: string;
+  hint?: ReactNode;
+  error?: string;
+  required?: boolean;
+  children: ReactNode;
 }) {
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)} style={selectStyle}>
+    <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <span style={{ fontSize: 13, color: "#b0a2ba" }}>
+        {text}
+        {required ? " *" : ""}
+      </span>
+      {children}
+      {error ? (
+        <span style={{ fontSize: 11.5, color: "#F2617A" }}>{error}</span>
+      ) : hint ? (
+        <span style={{ fontSize: 11.5, color: "#6f7a85" }}>{hint}</span>
+      ) : null}
+    </label>
+  );
+}
+
+function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: string[] }) {
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value)} style={smallInputStyle}>
       <option value="">—</option>
       {options.map((o) => (
         <option key={o} value={o}>
@@ -62,6 +108,33 @@ function Select({
       ))}
       <option value="Outro">Outro</option>
     </select>
+  );
+}
+
+function Toggle({ checked, disabled, onChange }: { checked: boolean; disabled: boolean; onChange: () => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={onChange}
+      style={{
+        width: 42,
+        height: 24,
+        borderRadius: 999,
+        border: "none",
+        padding: 3,
+        background: checked ? "#F249A0" : "rgba(255,255,255,0.12)",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.5 : 1,
+        display: "flex",
+        justifyContent: checked ? "flex-end" : "flex-start",
+        transition: "background 0.2s ease",
+      }}
+    >
+      <span style={{ width: 18, height: 18, borderRadius: "50%", background: "#fff", display: "block" }} />
+    </button>
   );
 }
 
@@ -77,9 +150,10 @@ function Accordion({
   children: ReactNode;
 }) {
   return (
-    <div style={{ borderTop: `1px solid rgba(255,255,255,0.06)` }}>
+    <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
       <button
         type="button"
+        className="acc-head"
         onClick={onToggle}
         style={{
           width: "100%",
@@ -89,14 +163,14 @@ function Accordion({
           padding: "13px 2px",
           background: "transparent",
           border: "none",
-          color: colors.text,
+          color: "#F4EEF6",
           fontSize: 13.5,
           fontWeight: 500,
           cursor: "pointer",
         }}
       >
         {title}
-        <span style={{ color: colors.textDim, fontSize: 16 }}>{open ? "−" : "+"}</span>
+        <span style={{ color: "#7c8894", fontSize: 16 }}>{open ? "−" : "+"}</span>
       </button>
       {open ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "4px 2px 18px" }}>{children}</div>
@@ -114,7 +188,7 @@ export function AgentConfigPage() {
   const [hasStoredToken, setHasStoredToken] = useState(false);
   const [replacingToken, setReplacingToken] = useState(false);
   const [depInput, setDepInput] = useState("");
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ identificacao: true });
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -148,32 +222,25 @@ export function AgentConfigPage() {
     };
   }, [agentId]);
 
-  const set = <K extends keyof FormState>(key: K) => (value: FormState[K]) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
+  const set =
+    <K extends keyof FormState>(key: K) =>
+    (value: FormState[K]) =>
+      setForm((prev) => ({ ...prev, [key]: value }));
 
-  const githubComplete = Boolean(
-    (hasStoredToken || form.githubTokenInput) && form.repoPrototype && form.repoTarget,
+  const text = (key: keyof FormState, placeholder?: string) => (
+    <input
+      type="text"
+      value={String(form[key] ?? "")}
+      placeholder={placeholder}
+      onChange={(e) => set(key)(e.target.value as FormState[typeof key])}
+      style={smallInputStyle}
+    />
   );
+
+  const githubComplete = Boolean((hasStoredToken || form.githubTokenInput) && form.repoPrototype && form.repoTarget);
   const canActivate = Boolean(form.vps) && githubComplete;
 
-  const toggleSection = (key: string) =>
-    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
-
-  const textField = useMemo(
-    () =>
-      function TextField(key: keyof FormState, placeholder?: string) {
-        return (
-          <input
-            type="text"
-            value={String(form[key] ?? "")}
-            placeholder={placeholder}
-            onChange={(e) => set(key)(e.target.value as FormState[typeof key])}
-            style={selectStyle}
-          />
-        );
-      },
-    [form],
-  );
+  const toggleSection = (key: string) => setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
 
   function addDep() {
     const value = depInput.trim();
@@ -225,346 +292,537 @@ export function AgentConfigPage() {
   const showTokenInput = !hasStoredToken || replacingToken;
 
   return (
-    <form
-      onSubmit={handleSubmit}
+    <div
       style={{
-        padding: "26px clamp(20px, 3vw, 40px) 40px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 18,
-        maxWidth: 860,
+        minHeight: "100vh",
+        width: "100%",
+        background: "#0B0910",
+        color: "#F4EEF6",
+        fontFamily: "'Space Grotesk', sans-serif",
+        padding: "26px clamp(20px, 4vw, 56px) 60px",
       }}
     >
-      <header>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Configurar {agent?.name}</h1>
-        <span style={{ fontFamily: fonts.mono, fontSize: 11.5, color: colors.textDim }}>
-          Configuração persistente do agente
-        </span>
-      </header>
-
-      {formError ? <Alert>{formError}</Alert> : null}
-      {saved ? <Alert tone="success">Configuração salva.</Alert> : null}
-
-      {/* Seção 1 — Identidade (somente exibição, vem do SOUL.md) */}
-      <div style={{ ...cardStyle, background: "rgba(255,255,255,0.04)", display: "flex", flexDirection: "column", gap: 14 }}>
-        <SectionTitle>🔒 IDENTIDADE</SectionTitle>
-        {[
-          { label: "Nome do agente", value: agent?.name },
-          { label: "Função / especialidade", value: agent?.role },
-          { label: "Instruções de comportamento", value: agent?.instructions },
-        ].map((item) => (
-          <div key={item.label}>
-            <span style={{ display: "block", fontSize: 11.5, color: colors.textFaint, marginBottom: 3 }}>
-              {item.label}
-            </span>
-            <span style={{ fontSize: 13.5, lineHeight: 1.55, color: "#a89db2" }}>{item.value}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Seção 2 — Conexão */}
-      <div style={{ ...cardStyle, display: "flex", flexDirection: "column", gap: 16 }}>
-        <SectionTitle>CONEXÃO</SectionTitle>
-        <div>
-          <span style={{ display: "block", fontSize: 11.5, color: colors.textFaint, marginBottom: 3 }}>Modelo</span>
-          <span style={{ fontSize: 13.5, color: "#a89db2" }}>{agent?.model}</span>
-        </div>
-        <Field label="Endereço VPS" required error={fieldErrors.vps}>
-          <input
-            type="text"
-            value={form.vps}
-            onChange={(e) => set("vps")(e.target.value)}
-            placeholder="vps.hostinger.com:8443"
-            style={inputStyle}
-          />
-        </Field>
-        <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: canActivate ? "pointer" : "not-allowed" }}>
-          <input
-            type="checkbox"
-            checked={form.active}
-            disabled={!canActivate && !form.active}
-            onChange={(e) => set("active")(e.target.checked)}
-          />
-          <span style={{ fontSize: 13, color: colors.textMuted }}>
-            Ativo
-            {!canActivate && !form.active ? (
-              <span style={{ color: colors.textFaint, fontSize: 11.5 }}> — preencha VPS e GitHub para ativar</span>
-            ) : null}
-          </span>
-        </label>
-      </div>
-
-      {/* Seção 3 — GitHub */}
-      <div style={{ ...cardStyle, display: "flex", flexDirection: "column", gap: 16 }}>
-        <SectionTitle>GITHUB</SectionTitle>
-
-        <Field
-          label="Token de acesso (PAT)"
-          required
-          hint="Escopo repo (+ workflow se usar CI/CD). Nunca é reexibido após salvo."
+      <div style={{ maxWidth: 760, margin: "0 auto" }}>
+        <Link
+          to="/painel"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: 12,
+            color: "#7c8894",
+            marginBottom: 24,
+          }}
         >
-          {showTokenInput ? (
-            <input
-              type="password"
-              value={form.githubTokenInput}
-              onChange={(e) => set("githubTokenInput")(e.target.value)}
-              placeholder="ghp_••••••••••••"
-              autoComplete="off"
-              style={inputStyle}
+          ← Voltar ao painel
+        </Link>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32 }}>
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 14,
+              overflow: "hidden",
+              flex: "0 0 auto",
+              boxShadow: "0 0 0 1px rgba(242,73,160,0.3)",
+            }}
+          >
+            <img
+              src={agent?.avatarUrl ?? "/uploads/761a440f4d38e77c845b67badf122797.jpg"}
+              alt={agent?.name}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
-          ) : (
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          </div>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Configurar {agent?.name}</h1>
+            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, color: "#7c8894" }}>
+              {agent?.role}
+            </span>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+          {formError ? (
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: 9,
+                border: "1px solid rgba(242,97,122,0.27)",
+                background: "rgba(242,97,122,0.08)",
+                color: "#F2617A",
+                fontSize: 13,
+              }}
+            >
+              {formError}
+            </div>
+          ) : null}
+          {saved ? (
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: 9,
+                border: "1px solid rgba(124,242,166,0.27)",
+                background: "rgba(124,242,166,0.08)",
+                color: "#7CF2A6",
+                fontSize: 13,
+              }}
+            >
+              Configuração salva.
+            </div>
+          ) : null}
+
+          {/* Seção 1 — Identidade (somente exibição) */}
+          <div
+            style={{
+              borderRadius: 14,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background: "rgba(255,255,255,0.015)",
+              padding: 20,
+              display: "flex",
+              flexDirection: "column",
+              gap: 14,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 13, color: "#6f7a85" }}>🔒</span>
               <span
                 style={{
-                  ...inputStyle,
-                  color: colors.textDim,
-                  fontFamily: fonts.mono,
-                  flex: 1,
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: 11,
+                  letterSpacing: "0.08em",
+                  color: "#6f7a85",
                 }}
               >
-                ••••••••••••••••
+                IDENTIDADE · definida em SOUL.md
               </span>
-              <Button type="button" variant="ghost" onClick={() => setReplacingToken(true)}>
-                Substituir
-              </Button>
             </div>
-          )}
-        </Field>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[
+                { label: "Nome do agente", value: agent?.name },
+                { label: "Função / especialidade", value: agent?.role },
+                { label: "Instruções de comportamento", value: agent?.instructions },
+              ].map((item) => (
+                <div key={item.label}>
+                  <span style={{ display: "block", fontSize: 11.5, color: "#6f7a85", marginBottom: 3 }}>
+                    {item.label}
+                  </span>
+                  <span style={{ fontSize: 14.5, color: "#C7BECE", lineHeight: 1.55 }}>{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-        <Field label="Repositório protótipo" required hint="Referência, somente leitura" error={fieldErrors.repoPrototype}>
-          <input
-            type="url"
-            value={form.repoPrototype}
-            onChange={(e) => set("repoPrototype")(e.target.value)}
-            placeholder="https://github.com/org/prototipo"
-            style={inputStyle}
-          />
-        </Field>
+          {/* Seção 2 — Conexão */}
+          <div style={cardStyle}>
+            <span style={sectionLabelStyle}>CONEXÃO</span>
 
-        <Field
-          label="Repositório destino"
-          required
-          hint={`Onde o ${agent?.name ?? "agente"} escreve — precisa de permissão de escrita. Branch gerada automaticamente por tarefa.`}
-          error={fieldErrors.repoTarget}
-        >
-          <input
-            type="url"
-            value={form.repoTarget}
-            onChange={(e) => set("repoTarget")(e.target.value)}
-            placeholder="https://github.com/org/destino"
-            style={inputStyle}
-          />
-        </Field>
-      </div>
+            <div>
+              <span style={{ display: "block", fontSize: 11.5, color: "#6f7a85", marginBottom: 3 }}>Modelo</span>
+              <span style={{ fontSize: 14.5, color: "#C7BECE" }}>{agent?.model}</span>
+            </div>
 
-      {/* Seção 4 — Convenções do projeto destino */}
-      <div style={{ ...cardStyle, display: "flex", flexDirection: "column", gap: 6 }}>
-        <SectionTitle>CONVENÇÕES DO PROJETO DESTINO</SectionTitle>
+            <Label text="Endereço VPS" required error={fieldErrors.vps}>
+              <input
+                type="text"
+                value={form.vps}
+                onChange={(e) => set("vps")(e.target.value)}
+                placeholder="vps.hostinger.com:8443"
+                style={inputStyle}
+              />
+            </Label>
 
-        <Accordion title="4.1 Identificação" open={!!openSections.identificacao} onToggle={() => toggleSection("identificacao")}>
-          <Field label="Nome do projeto" required error={fieldErrors.projectName}>
-            {textField("projectName")}
-          </Field>
-          <Field label="Stack" required error={fieldErrors.stack}>
-            <Select
-              value={form.stack}
-              onChange={set("stack")}
-              options={["Next.js + TypeScript", "React + Vite", "React Native + Expo"]}
-            />
-          </Field>
-          {form.stack === "Outro" ? (
-            <Field label="Especifique a stack">{textField("stackOther")}</Field>
-          ) : null}
-        </Accordion>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                <span style={{ fontSize: 13, color: "#b0a2ba" }}>Ativo</span>
+                {!canActivate && !form.active ? (
+                  <span style={{ fontSize: 11.5, color: "#6f7a85" }}>
+                    Preencha VPS e a seção GitHub para poder ativar
+                  </span>
+                ) : null}
+              </div>
+              <Toggle
+                checked={form.active}
+                disabled={!canActivate && !form.active}
+                onChange={() => set("active")(!form.active)}
+              />
+            </div>
+          </div>
 
-        <Accordion title="4.2 Gerenciamento de estado" open={!!openSections.estado} onToggle={() => toggleSection("estado")}>
-          <Field label="Padrão adotado">
-            <Select
-              value={form.statePattern ?? ""}
-              onChange={set("statePattern")}
-              options={["Context API", "Redux", "Zustand", "React Query"]}
-            />
-          </Field>
-          <Field label="Convenção de organização">{textField("stateOrg")}</Field>
-        </Accordion>
+          {/* Seção 3 — GitHub */}
+          <div style={cardStyle}>
+            <span style={sectionLabelStyle}>GITHUB</span>
 
-        <Accordion title="4.3 Navegação / rotas" open={!!openSections.navegacao} onToggle={() => toggleSection("navegacao")}>
-          <Field label="Mecanismo">
-            <Select
-              value={form.routingMech ?? ""}
-              onChange={set("routingMech")}
-              options={["App Router", "React Router", "React Navigation"]}
-            />
-          </Field>
-          <Field label="Registro de rotas">{textField("routesRegistry")}</Field>
-          <Field label="Transições / animações customizadas">{textField("routesAnim")}</Field>
-        </Accordion>
-
-        <Accordion title="4.4 Estrutura de pastas" open={!!openSections.pastas} onToggle={() => toggleSection("pastas")}>
-          <Field label="Padrão">
-            <Select
-              value={form.folderPattern ?? ""}
-              onChange={set("folderPattern")}
-              options={["por feature", "por tipo", "colocation"]}
-            />
-          </Field>
-          <Field label="Design system central (caminho)">{textField("dsPath")}</Field>
-          <Field label="Modelos de dados / tipos (caminho)">{textField("modelsPath")}</Field>
-          <Field label="Serviços / API (caminho + cliente)">{textField("servicesPath")}</Field>
-        </Accordion>
-
-        <Accordion title="4.5 Estilo e nomenclatura" open={!!openSections.estilo} onToggle={() => toggleSection("estilo")}>
-          <Field label="Nome de arquivo / pasta">{textField("fileNaming")}</Field>
-          <Field label="Nome de componente">{textField("componentNaming")}</Field>
-          <Field label="Estilos">
-            <Select
-              value={form.styleTool ?? ""}
-              onChange={set("styleTool")}
-              options={["Tailwind", "CSS Modules", "styled-components"]}
-            />
-          </Field>
-          <Field label="Tipografia (fonte + onde configurada)">{textField("typography")}</Field>
-        </Accordion>
-
-        <Accordion
-          title="4.6 Componentes de design system"
-          open={!!openSections.componentes}
-          onToggle={() => toggleSection("componentes")}
-        >
-          {form.dsComponents.map((row, index) => (
-            <div key={index} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 8 }}>
-              {(["name", "loc", "usage"] as const).map((field) => (
+            <Label
+              text="Token de acesso (PAT)"
+              required
+              hint={
+                <>
+                  Escopo <code style={{ color: "#b0a2ba" }}>repo</code> (+{" "}
+                  <code style={{ color: "#b0a2ba" }}>workflow</code> se usar CI/CD)
+                </>
+              }
+            >
+              {showTokenInput ? (
                 <input
-                  key={field}
-                  type="text"
-                  value={row[field]}
-                  placeholder={{ name: "Componente", loc: "Localização", usage: "Uso típico" }[field]}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      dsComponents: prev.dsComponents.map((r, i) =>
-                        i === index ? { ...r, [field]: e.target.value } : r,
-                      ),
-                    }))
-                  }
-                  style={selectStyle}
+                  type="password"
+                  value={form.githubTokenInput}
+                  onChange={(e) => set("githubTokenInput")(e.target.value)}
+                  placeholder="ghp_••••••••••••"
+                  autoComplete="off"
+                  style={inputStyle}
                 />
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span
+                    style={{
+                      padding: "11px 14px",
+                      borderRadius: 9,
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      background: "rgba(255,255,255,0.03)",
+                      color: "#7c8894",
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: 14,
+                      flex: 1,
+                    }}
+                  >
+                    ••••••••••••••••
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setReplacingToken(true)}
+                    style={{
+                      padding: "10px 14px",
+                      borderRadius: 9,
+                      border: "1px solid rgba(255,255,255,0.14)",
+                      background: "transparent",
+                      color: "#F4EEF6",
+                      fontSize: 13,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Substituir
+                  </button>
+                </div>
+              )}
+            </Label>
+
+            <Label
+              text="Repositório protótipo"
+              required
+              hint="Referência, somente leitura"
+              error={fieldErrors.repoPrototype}
+            >
+              <input
+                type="url"
+                value={form.repoPrototype}
+                onChange={(e) => set("repoPrototype")(e.target.value)}
+                placeholder="https://github.com/org/prototipo"
+                style={inputStyle}
+              />
+            </Label>
+
+            <Label
+              text="Repositório destino"
+              required
+              hint={`Onde o ${agent?.name ?? "agente"} escreve — precisa de permissão de escrita. Branch gerada automaticamente por tarefa (${agent?.name?.toLowerCase() ?? "agente"}/<feature>).`}
+              error={fieldErrors.repoTarget}
+            >
+              <input
+                type="url"
+                value={form.repoTarget}
+                onChange={(e) => set("repoTarget")(e.target.value)}
+                placeholder="https://github.com/org/destino"
+                style={inputStyle}
+              />
+            </Label>
+          </div>
+
+          {/* Seção 4 — Convenções do projeto destino */}
+          <div style={{ ...cardStyle, gap: 6 }}>
+            <span style={{ ...sectionLabelStyle, marginBottom: 6 }}>CONVENÇÕES DO PROJETO DESTINO</span>
+
+            <Accordion
+              title="4.1 Identificação"
+              open={!!openSections.identificacao}
+              onToggle={() => toggleSection("identificacao")}
+            >
+              <Label text="Nome do projeto" required error={fieldErrors.projectName}>
+                {text("projectName")}
+              </Label>
+              <Label text="Stack" required error={fieldErrors.stack}>
+                <Select
+                  value={form.stack}
+                  onChange={set("stack")}
+                  options={["Next.js + TypeScript", "React + Vite", "React Native + Expo"]}
+                />
+              </Label>
+              {form.stack === "Outro" ? (
+                <Label text="Especifique a stack">{text("stackOther", "Especifique a stack")}</Label>
+              ) : null}
+            </Accordion>
+
+            <Accordion
+              title="4.2 Gerenciamento de estado"
+              open={!!openSections.estado}
+              onToggle={() => toggleSection("estado")}
+            >
+              <Label text="Padrão adotado">
+                <Select
+                  value={form.statePattern ?? ""}
+                  onChange={set("statePattern")}
+                  options={["Context API", "Redux", "Zustand", "React Query"]}
+                />
+              </Label>
+              <Label text="Convenção de organização">{text("stateOrg")}</Label>
+            </Accordion>
+
+            <Accordion
+              title="4.3 Navegação/rotas"
+              open={!!openSections.navegacao}
+              onToggle={() => toggleSection("navegacao")}
+            >
+              <Label text="Mecanismo">
+                <Select
+                  value={form.routingMech ?? ""}
+                  onChange={set("routingMech")}
+                  options={["App Router", "React Router", "React Navigation"]}
+                />
+              </Label>
+              <Label text="Registro de rotas">{text("routesRegistry")}</Label>
+              <Label text="Transições/animações customizadas">{text("routesAnim")}</Label>
+            </Accordion>
+
+            <Accordion
+              title="4.4 Estrutura de pastas"
+              open={!!openSections.pastas}
+              onToggle={() => toggleSection("pastas")}
+            >
+              <Label text="Padrão">
+                <Select
+                  value={form.folderPattern ?? ""}
+                  onChange={set("folderPattern")}
+                  options={["por feature", "por tipo", "colocation"]}
+                />
+              </Label>
+              <Label text="Design system central (caminho)">{text("dsPath")}</Label>
+              <Label text="Modelos de dados/tipos (caminho)">{text("modelsPath")}</Label>
+              <Label text="Serviços/API (caminho + cliente)">{text("servicesPath")}</Label>
+            </Accordion>
+
+            <Accordion
+              title="4.5 Estilo e nomenclatura"
+              open={!!openSections.estilo}
+              onToggle={() => toggleSection("estilo")}
+            >
+              <Label text="Nome de arquivo/pasta">{text("fileNaming")}</Label>
+              <Label text="Nome de componente">{text("componentNaming")}</Label>
+              <Label text="Estilos">
+                <Select
+                  value={form.styleTool ?? ""}
+                  onChange={set("styleTool")}
+                  options={["Tailwind", "CSS Modules", "styled-components"]}
+                />
+              </Label>
+              <Label text="Tipografia (fonte + onde configurada)">{text("typography")}</Label>
+            </Accordion>
+
+            <Accordion
+              title="4.6 Componentes de design system"
+              open={!!openSections.componentes}
+              onToggle={() => toggleSection("componentes")}
+            >
+              {form.dsComponents.map((row, index) => (
+                <div key={index} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 8 }}>
+                  {(["name", "loc", "usage"] as const).map((field) => (
+                    <input
+                      key={field}
+                      type="text"
+                      value={row[field]}
+                      placeholder={{ name: "Componente", loc: "Localização", usage: "Uso típico" }[field]}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          dsComponents: prev.dsComponents.map((r, i) =>
+                            i === index ? { ...r, [field]: e.target.value } : r,
+                          ),
+                        }))
+                      }
+                      style={smallInputStyle}
+                    />
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        dsComponents: prev.dsComponents.filter((_, i) => i !== index),
+                      }))
+                    }
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: "#7c8894",
+                      cursor: "pointer",
+                      fontSize: 16,
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
               ))}
               <button
                 type="button"
                 onClick={() =>
                   setForm((prev) => ({
                     ...prev,
-                    dsComponents: prev.dsComponents.filter((_, i) => i !== index),
+                    dsComponents: [...prev.dsComponents, { name: "", loc: "", usage: "" }],
                   }))
                 }
-                style={{ background: "transparent", border: "none", color: colors.textDim, cursor: "pointer", fontSize: 16 }}
-              >
-                ×
-              </button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="ghost"
-            style={{ alignSelf: "flex-start", padding: "7px 12px", fontSize: 12.5 }}
-            onClick={() =>
-              setForm((prev) => ({
-                ...prev,
-                dsComponents: [...prev.dsComponents, { name: "", loc: "", usage: "" }],
-              }))
-            }
-          >
-            + adicionar componente
-          </Button>
-        </Accordion>
-
-        <Accordion title="4.7 Rede e dados" open={!!openSections.rede} onToggle={() => toggleSection("rede")}>
-          <Field label="Cliente HTTP">
-            <Select
-              value={form.httpClient ?? ""}
-              onChange={set("httpClient")}
-              options={["fetch", "axios", "react-query", "swr"]}
-            />
-          </Field>
-          <Field label="Padrão de tratamento de erro de API">{textField("errorPattern")}</Field>
-        </Accordion>
-
-        <Accordion
-          title="4.8 Dependências já presentes"
-          open={!!openSections.dependencias}
-          onToggle={() => toggleSection("dependencias")}
-        >
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-            {form.deps.map((dep, index) => (
-              <span
-                key={`${dep}-${index}`}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontFamily: fonts.mono,
-                  fontSize: 11.5,
-                  padding: "5px 10px",
-                  borderRadius: radii.pill,
-                  border: `1px solid rgba(242,73,160,0.2)`,
-                  color: "#b5a3c0",
+                  alignSelf: "flex-start",
+                  padding: "7px 12px",
+                  borderRadius: 7,
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  background: "transparent",
+                  color: "#F4EEF6",
+                  fontSize: 12.5,
+                  cursor: "pointer",
                 }}
               >
-                {dep}
-                <span
-                  onClick={() =>
-                    setForm((prev) => ({ ...prev, deps: prev.deps.filter((_, i) => i !== index) }))
-                  }
-                  style={{ cursor: "pointer", color: colors.textDim }}
+                + adicionar componente
+              </button>
+            </Accordion>
+
+            <Accordion title="4.7 Rede e dados" open={!!openSections.rede} onToggle={() => toggleSection("rede")}>
+              <Label text="Cliente HTTP">
+                <Select
+                  value={form.httpClient ?? ""}
+                  onChange={set("httpClient")}
+                  options={["fetch", "axios", "react-query", "swr"]}
+                />
+              </Label>
+              <Label text="Padrão de tratamento de erro de API">{text("errorPattern")}</Label>
+            </Accordion>
+
+            <Accordion
+              title="4.8 Dependências já presentes"
+              open={!!openSections.dependencias}
+              onToggle={() => toggleSection("dependencias")}
+            >
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                {form.deps.map((dep, index) => (
+                  <span
+                    key={`${dep}-${index}`}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: 11.5,
+                      padding: "5px 10px",
+                      borderRadius: 999,
+                      border: "1px solid rgba(242,73,160,0.2)",
+                      color: "#b5a3c0",
+                    }}
+                  >
+                    {dep}
+                    <span
+                      className="chip-x"
+                      onClick={() => setForm((prev) => ({ ...prev, deps: prev.deps.filter((_, i) => i !== index) }))}
+                      style={{ cursor: "pointer", color: "#7c8894" }}
+                    >
+                      ×
+                    </span>
+                  </span>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  type="text"
+                  value={depInput}
+                  placeholder="ex: zod"
+                  onChange={(e) => setDepInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addDep();
+                    }
+                  }}
+                  style={smallInputStyle}
+                />
+                <button
+                  type="button"
+                  onClick={addDep}
+                  style={{
+                    padding: "9px 14px",
+                    borderRadius: 8,
+                    border: "none",
+                    background: "rgba(242,73,160,0.15)",
+                    color: "#F9A8D0",
+                    fontSize: 12.5,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
                 >
-                  ×
-                </span>
-              </span>
-            ))}
+                  Adicionar
+                </button>
+              </div>
+            </Accordion>
+
+            <Accordion
+              title="4.9 Observações adicionais"
+              open={!!openSections.observacoes}
+              onToggle={() => toggleSection("observacoes")}
+            >
+              <textarea
+                rows={3}
+                value={form.notes ?? ""}
+                onChange={(e) => set("notes")(e.target.value)}
+                style={{ ...inputStyle, fontSize: 13.5, resize: "vertical" }}
+              />
+            </Accordion>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <input
-              type="text"
-              value={depInput}
-              placeholder="ex: zod"
-              onChange={(e) => setDepInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addDep();
-                }
+
+          <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+            <button
+              type="button"
+              onClick={() => navigate("/painel")}
+              style={{
+                padding: "12px 22px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.14)",
+                background: "transparent",
+                color: "#F4EEF6",
+                fontWeight: 600,
+                fontSize: 14,
+                cursor: "pointer",
               }}
-              style={selectStyle}
-            />
-            <Button type="button" variant="ghost" onClick={addDep} style={{ whiteSpace: "nowrap" }}>
-              Adicionar
-            </Button>
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="iris-button-primary"
+              style={{
+                padding: "12px 24px",
+                borderRadius: 10,
+                border: "none",
+                background: "#F249A0",
+                color: "#fff",
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontWeight: 600,
+                fontSize: 14,
+                cursor: "pointer",
+              }}
+            >
+              {saving ? "Salvando…" : "Salvar alterações"}
+            </button>
           </div>
-        </Accordion>
-
-        <Accordion
-          title="4.9 Observações adicionais"
-          open={!!openSections.observacoes}
-          onToggle={() => toggleSection("observacoes")}
-        >
-          <textarea
-            rows={3}
-            value={form.notes ?? ""}
-            onChange={(e) => set("notes")(e.target.value)}
-            style={{ ...inputStyle, resize: "vertical" }}
-          />
-        </Accordion>
+        </form>
       </div>
-
-      <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-        <Button type="button" variant="ghost" onClick={() => navigate("/painel")}>
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={saving}>
-          {saving ? "Salvando…" : "Salvar alterações"}
-        </Button>
-      </div>
-    </form>
+    </div>
   );
 }

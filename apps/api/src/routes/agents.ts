@@ -20,8 +20,8 @@ const agents: Agent[] = [
     status: "online",
     active: true,
     vpsAddress: "vps.hostinger.com:8443",
-    lastRunAt: new Date().toISOString(),
-    tasksDone: 42,
+    lastRunAt: new Date(Date.now() - 2 * 60_000).toISOString(),
+    conversations: 42,
   },
 ];
 

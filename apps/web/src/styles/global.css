@@ -98,6 +98,71 @@ textarea::placeholder {
   }
 }
 
+@keyframes iris-reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes iris-reveal-img {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes iris-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.012);
+  }
+}
+
+.iris-reveal {
+  animation: iris-reveal-up 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.iris-reveal-img {
+  animation: iris-reveal-img 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.holo {
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.5s ease;
+  will-change: transform;
+}
+
+.holo-wrap:hover .holo {
+  transform: scale(1.03) rotateY(-4deg);
+  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.75), 0 0 60px -12px rgba(242, 73, 160, 0.4);
+}
+
+.holo-wrap:hover .holo-glow {
+  opacity: 1;
+}
+
+.chip-x:hover {
+  color: var(--iris-accent);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: rgba(242, 73, 160, 0.5) !important;
+}
+
 .iris-nav-item {
   transition: background 0.15s ease, color 0.15s ease;
 }
