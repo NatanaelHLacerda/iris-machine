@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #0B0910; }
+  * { box-sizing: border-box; }
+  a { color: #F249A0; text-decoration: none; }
+  a:hover { color: #FF6FB8; }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 8px; }
+  input, textarea, select { font-family: 'Space Grotesk', sans-serif; }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: rgba(242,73,160,0.5) !important; }
+  .acc-head { cursor: pointer; }
+  .chip-x:hover { color: #F249A0; }
+</style>
+</helmet>
+<div style="min-height: 100vh; width: 100vw; background: #0B0910; color: #F4EEF6; font-family: 'Space Grotesk', sans-serif; padding: 26px clamp(20px, 4vw, 56px) 60px;">
+
+  <div style="max-width: 760px; margin: 0 auto;">
+    <a href="CRM.dc.html" style="display: inline-flex; align-items: center; gap: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #7c8894; margin-bottom: 24px;">← Voltar ao painel</a>
+
+    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 32px;">
+      <div style="width: 56px; height: 56px; border-radius: 14px; overflow: hidden; flex: 0 0 auto; box-shadow: 0 0 0 1px rgba(242,73,160,0.3);">
+        <img src="uploads/761a440f4d38e77c845b67badf122797.jpg" alt="Jimmy" style="width: 100%; height: 100%; object-fit: cover;" />
+      </div>
+      <div>
+        <h1 style="margin: 0; font-size: 22px; font-weight: 700;">Configurar Jimmy</h1>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #7c8894;">Conversão e portabilidade de código</span>
+      </div>
+    </div>
+
+    <form onsubmit="{{ handleSubmit }}" style="display: flex; flex-direction: column; gap: 22px;">
+
+      <!-- Seção 1 — Identidade (somente exibição) -->
+      <div style="border-radius: 14px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.015); padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 13px; color: #6f7a85;">🔒</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #6f7a85;">IDENTIDADE · definida em SOUL.md</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div>
+            <span style="display: block; font-size: 11.5px; color: #6f7a85; margin-bottom: 3px;">Nome do agente</span>
+            <span style="font-size: 14.5px; color: #C7BECE;">{{ identity.name }}</span>
+          </div>
+          <div>
+            <span style="display: block; font-size: 11.5px; color: #6f7a85; margin-bottom: 3px;">Função / especialidade</span>
+            <span style="font-size: 14.5px; color: #C7BECE;">{{ identity.role }}</span>
+          </div>
+          <div>
+            <span style="display: block; font-size: 11.5px; color: #6f7a85; margin-bottom: 3px;">Instruções de comportamento</span>
+            <span style="font-size: 13.5px; line-height: 1.55; color: #a89db2;">{{ identity.instructions }}</span>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Seção 3 — GitHub -->
+      <div style="border-radius: 14px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #F249A0;">GITHUB</span>
+
+        <label style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 13px; color: #b0a2ba;">Token de acesso (PAT) *</span>
+          <sc-if value="{{ form.githubToken }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="padding: 11px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); color: #7c8894; font-family: 'IBM Plex Mono', monospace; font-size: 14px; flex: 1;">••••••••••••••••</span>
+              <button type="button" onClick="{{ resetToken }}" style="padding: 10px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.14); background: transparent; color: #F4EEF6; font-size: 13px; cursor: pointer;">Substituir</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ !form.githubToken }}" hint-placeholder-val="{{ true }}">
+            <input type="password" value="{{ form.githubTokenInput }}" onChange="{{ setField('githubTokenInput') }}" placeholder="ghp_••••••••••••" autoComplete="off" style="padding: 11px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); color: #F4EEF6; font-size: 14px;" />
+          </sc-if>
+          <span style="font-size: 11.5px; color: #6f7a85;">Escopo <code style="color: #b0a2ba;">repo</code> (+ <code style="color: #b0a2ba;">workflow</code> se usar CI/CD)</span>
+        </label>
+
+        <label style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 13px; color: #b0a2ba;">Repositório protótipo *</span>
+          <input type="url" value="{{ form.repoPrototype }}" onChange="{{ setField('repoPrototype') }}" placeholder="https://github.com/org/prototipo" style="padding: 11px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); color: #F4EEF6; font-size: 14px;" />
+          <span style="font-size: 11.5px; color: #6f7a85;">Referência, somente leitura</span>
+        </label>
+
+        <label style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 13px; color: #b0a2ba;">Repositório destino *</span>
+          <input type="url" value="{{ form.repoTarget }}" onChange="{{ setField('repoTarget') }}" placeholder="https://github.com/org/destino" style="padding: 11px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); color: #F4EEF6; font-size: 14px;" />
+          <span style="font-size: 11.5px; color: #6f7a85;">Onde o Jimmy escreve — precisa de permissão de escrita. Branch gerada automaticamente por tarefa (jimmy/&lt;feature&gt;).</span>
+        </label>
+      </div>
+
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <a href="CRM.dc.html" style="padding: 12px 22px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); color: #F4EEF6; font-weight: 600; font-size: 14px;">Cancelar</a>
+        <button type="submit" style="padding: 12px 24px; border-radius: 10px; border: none; background: #F249A0; color: #fff; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer;">Salvar alterações</button>
+      </div>
+    </form>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:900,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = {
+    form: {
+      vps: "vps.hostinger.com:8443",
+      active: false,
+      githubToken: "",
+      githubTokenInput: "",
+      repoPrototype: "",
+      repoTarget: "",
+      stack: "Next.js + TypeScript",
+      stackOther: "",
+      statePattern: "",
+      stateOrg: "",
+      routingMech: "",
+      routesRegistry: "",
+      routesAnim: "",
+      folderPattern: "",
+      dsPath: "",
+      modelsPath: "",
+      servicesPath: "",
+      fileNaming: "",
+      componentNaming: "",
+      styleTool: "Tailwind",
+      typography: "",
+      dsComponents: [],
+      httpClient: "fetch",
+      errorPattern: "",
+      deps: [],
+      depInput: "",
+      notes: "",
+      projectName: "",
+    },
+    openSections: {},
+  };
+
+  identity = {
+    name: "Jimmy",
+    role: "Conversão e portabilidade de código entre plataformas",
+    instructions: "Analisa projetos em diferentes linguagens e frameworks, e reconstrói cada tela ou componente na plataforma de destino — pronto para integrar, já validado e revisado.",
+    model: "Claude Opus",
+  };
+
+  setF(key, val) { this.setState(s => ({ form: { ...s.form, [key]: val } })); }
+
+  addDep() {
+    const v = this.state.form.depInput.trim();
+    if (!v) return;
+    this.setState(s => ({ form: { ...s.form, deps: [...s.form.deps, v], depInput: "" } }));
+  }
+  removeDep(i) { this.setState(s => ({ form: { ...s.form, deps: s.form.deps.filter((_, idx) => idx !== i) } })); }
+
+  addRow() { this.setState(s => ({ form: { ...s.form, dsComponents: [...s.form.dsComponents, { name: "", loc: "", usage: "" }] } })); }
+  removeRow(i) { this.setState(s => ({ form: { ...s.form, dsComponents: s.form.dsComponents.filter((_, idx) => idx !== i) } })); }
+  editRow(i, field, val) {
+    this.setState(s => ({ form: { ...s.form, dsComponents: s.form.dsComponents.map((r, idx) => idx === i ? { ...r, [field]: val } : r) } }));
+  }
+
+  fieldInput(value, onChange, placeholder) {
+    return React.createElement('input', {
+      type: 'text', value, placeholder,
+      onChange: (e) => onChange(e.target.value),
+      style: { padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.03)', color: '#F4EEF6', fontSize: 13.5, fontFamily: "'Space Grotesk', sans-serif", width: '100%' }
+    });
+  }
+  fieldSelect(value, onChange, options) {
+    return React.createElement('select', {
+      value, onChange: (e) => onChange(e.target.value),
+      style: { padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.03)', color: '#F4EEF6', fontSize: 13.5, fontFamily: "'Space Grotesk', sans-serif", width: '100%' }
+    }, options.map(o => React.createElement('option', { key: o, value: o }, o)).concat([React.createElement('option', { key: '__other', value: 'Outro' }, 'Outro')]));
+  }
+  labeled(label, node, required) {
+    return React.createElement('label', { style: { display: 'flex', flexDirection: 'column', gap: 5 } },
+      React.createElement('span', { style: { fontSize: 12.5, color: '#b0a2ba' } }, label + (required ? ' *' : '')),
+      node
+    );
+  }
+
+  buildAccordionContent(form) {
+    const f = form;
+    const set = (k) => (v) => this.setF(k, v);
+    return {
+      identificacao: React.createElement(React.Fragment, null,
+        this.labeled('Nome do projeto', this.fieldInput(f.projectName, set('projectName')), true),
+        this.labeled('Stack', this.fieldSelect(f.stack, set('stack'), ['Next.js + TypeScript', 'React + Vite', 'React Native + Expo']), true),
+        f.stack === 'Outro' ? this.fieldInput(f.stackOther, set('stackOther'), 'Especifique a stack') : null,
+      ),
+      estado: React.createElement(React.Fragment, null,
+        this.labeled('Padrão adotado', this.fieldSelect(f.statePattern, set('statePattern'), ['Context API', 'Redux', 'Zustand', 'React Query'])),
+        this.labeled('Convenção de organização', this.fieldInput(f.stateOrg, set('stateOrg'))),
+      ),
+      navegacao: React.createElement(React.Fragment, null,
+        this.labeled('Mecanismo', this.fieldSelect(f.routingMech, set('routingMech'), ['App Router', 'React Router', 'React Navigation'])),
+        this.labeled('Registro de rotas', this.fieldInput(f.routesRegistry, set('routesRegistry'))),
+        this.labeled('Transições/animações customizadas', this.fieldInput(f.routesAnim, set('routesAnim'))),
+      ),
+      pastas: React.createElement(React.Fragment, null,
+        this.labeled('Padrão', this.fieldSelect(f.folderPattern, set('folderPattern'), ['por feature', 'por tipo', 'colocation'])),
+        this.labeled('Design system central (caminho)', this.fieldInput(f.dsPath, set('dsPath'))),
+        this.labeled('Modelos de dados/tipos (caminho)', this.fieldInput(f.modelsPath, set('modelsPath'))),
+        this.labeled('Serviços/API (caminho + cliente)', this.fieldInput(f.servicesPath, set('servicesPath'))),
+      ),
+      estilo: React.createElement(React.Fragment, null,
+        this.labeled('Nome de arquivo/pasta', this.fieldInput(f.fileNaming, set('fileNaming'))),
+        this.labeled('Nome de componente', this.fieldInput(f.componentNaming, set('componentNaming'))),
+        this.labeled('Estilos', this.fieldSelect(f.styleTool, set('styleTool'), ['Tailwind', 'CSS Modules', 'styled-components'])),
+        this.labeled('Tipografia (fonte + onde configurada)', this.fieldInput(f.typography, set('typography'))),
+      ),
+      componentes: React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
+        f.dsComponents.map((row, i) => React.createElement('div', { key: i, style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 8 } },
+          this.fieldInput(row.name, (v) => this.editRow(i, 'name', v), 'Componente'),
+          this.fieldInput(row.loc, (v) => this.editRow(i, 'loc', v), 'Localização'),
+          this.fieldInput(row.usage, (v) => this.editRow(i, 'usage', v), 'Uso típico'),
+          React.createElement('button', { type: 'button', onClick: () => this.removeRow(i), style: { background: 'transparent', border: 'none', color: '#7c8894', cursor: 'pointer', fontSize: 16 } }, '×')
+        )),
+        React.createElement('button', { type: 'button', onClick: () => this.addRow(), style: { alignSelf: 'flex-start', padding: '7px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.14)', background: 'transparent', color: '#F4EEF6', fontSize: 12.5, cursor: 'pointer' } }, '+ adicionar componente')
+      ),
+      rede: React.createElement(React.Fragment, null,
+        this.labeled('Cliente HTTP', this.fieldSelect(f.httpClient, set('httpClient'), ['fetch', 'axios', 'react-query', 'swr'])),
+        this.labeled('Padrão de tratamento de erro de API', this.fieldInput(f.errorPattern, set('errorPattern'))),
+      ),
+      dependencias: React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
+        React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 7 } },
+          f.deps.map((d, i) => React.createElement('span', { key: i, style: { display: 'flex', alignItems: 'center', gap: 6, fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, padding: '5px 10px', borderRadius: 999, border: '1px solid rgba(242,73,160,0.2)', color: '#b5a3c0' } },
+            d, React.createElement('span', { className: 'chip-x', onClick: () => this.removeDep(i), style: { cursor: 'pointer', color: '#7c8894' } }, '×')
+          ))
+        ),
+        React.createElement('div', { style: { display: 'flex', gap: 8 } },
+          this.fieldInput(f.depInput, set('depInput'), 'ex: zod'),
+          React.createElement('button', { type: 'button', onClick: () => this.addDep(), style: { padding: '9px 14px', borderRadius: 8, border: 'none', background: 'rgba(242,73,160,0.15)', color: '#F9A8D0', fontSize: 12.5, cursor: 'pointer' } }, 'Adicionar')
+        )
+      ),
+      observacoes: React.createElement('textarea', {
+        rows: 3, value: f.notes, onChange: (e) => this.setF('notes', e.target.value),
+        style: { padding: '11px 14px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.03)', color: '#F4EEF6', fontSize: 13.5, resize: 'vertical', width: '100%' }
+      }),
+    };
+  }
+
+  renderVals() {
+    const f = this.state.form;
+    const contents = this.buildAccordionContent(f);
+    const defs = [
+      { key: 'identificacao', title: '4.1 Identificação' },
+      { key: 'estado', title: '4.2 Gerenciamento de estado' },
+      { key: 'navegacao', title: '4.3 Navegação/rotas' },
+      { key: 'pastas', title: '4.4 Estrutura de pastas' },
+      { key: 'estilo', title: '4.5 Estilo e nomenclatura' },
+      { key: 'componentes', title: '4.6 Componentes de design system' },
+      { key: 'rede', title: '4.7 Rede e dados' },
+      { key: 'dependencias', title: '4.8 Dependências já presentes' },
+      { key: 'observacoes', title: '4.9 Observações adicionais' },
+    ];
+    const accordion = defs.map(d => ({
+      ...d,
+      open: !!this.state.openSections[d.key],
+      chevron: this.state.openSections[d.key] ? '−' : '+',
+      content: contents[d.key],
+    }));
+
+    const section4Complete = !!(f.projectName && f.stack);
+    const githubComplete = !!((f.githubToken || f.githubTokenInput) && f.repoPrototype && f.repoTarget);
+    const canActivate = !!(f.vps && githubComplete);
+
+    return {
+      identity: this.identity,
+      form: f,
+      accordion,
+      section4Complete,
+      canActivate,
+      setField: (key) => (e) => this.setF(key, e.target.value),
+      toggleActive: () => { if (!f.active && !canActivate) return; this.setF('active', !f.active); },
+      resetToken: () => this.setF('githubToken', ''),
+      toggleAccordion: (key) => () => this.setState(s => ({ openSections: { ...s.openSections, [key]: !s.openSections[key] } })),
+      handleSubmit: (e) => {
+        e.preventDefault();
+        if (f.githubTokenInput) this.setF('githubToken', f.githubTokenInput);
+        window.location.href = "CRM.dc.html";
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>
