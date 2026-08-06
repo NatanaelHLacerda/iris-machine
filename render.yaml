@@ -47,4 +47,9 @@ services:
       - key: PASSWORD_RESET_REDIRECT_URL
         sync: false
 
+      # JSON { "<agentId>": { "baseUrl", "username", "password" } } — credenciais
+      # do dashboard.basic_auth de cada VPS hermes-agent. Segredo: só aqui.
+      - key: HERMES_AGENTS
+        sync: false
+
 # PORT não é declarada: o Render injeta a dele e apps/api/src/env.ts já a lê.

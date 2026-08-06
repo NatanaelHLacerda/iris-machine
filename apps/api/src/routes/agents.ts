@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { agentConfigSchema, type Agent, type AgentConfig, type ChatMessage } from "@iris/shared";
 import { authenticate, requireUser } from "../plugins/authenticate.js";
 import { HttpError, sendError } from "../lib/errors.js";
+import { sendMessageToHermesAgent } from "../lib/hermesClient.js";
 
 /**
  * Armazenamento em memória — placeholder até as tabelas de agentes existirem
@@ -19,7 +20,7 @@ const agents: Agent[] = [
     avatarUrl: "/uploads/761a440f4d38e77c845b67badf122797.jpg",
     status: "online",
     active: true,
-    vpsAddress: "vps.hostinger.com:8443",
+    vpsAddress: "72-60-126-228.sslip.io",
     lastRunAt: new Date(Date.now() - 2 * 60_000).toISOString(),
     conversations: 42,
   },
@@ -107,10 +108,7 @@ export async function agentRoutes(app: FastifyInstance): Promise<void> {
     }
   });
 
-  /**
-   * POST /agents/:id/messages — envia mensagem ao agente.
-   * A resposta ainda é simulada; aqui entra a chamada real ao agente na VPS.
-   */
+  /** POST /agents/:id/messages — envia mensagem ao agente via hermes serve na VPS. */
   app.post<{ Params: { id: string }; Body: { content?: string } }>(
     "/:id/messages",
     async (request, reply) => {
@@ -128,12 +126,14 @@ export async function agentRoutes(app: FastifyInstance): Promise<void> {
           content,
           createdAt: new Date().toISOString(),
         };
+
+        const replyText = await sendMessageToHermesAgent(agent.id, content);
+
         const agentMessage: ChatMessage = {
           id: crypto.randomUUID(),
           agentId: agent.id,
           author: "agent",
-          content:
-            "Entendido. Vou analisar a estrutura e retornar com o plano de portabilidade em instantes.",
+          content: replyText,
           createdAt: new Date().toISOString(),
         };
 
