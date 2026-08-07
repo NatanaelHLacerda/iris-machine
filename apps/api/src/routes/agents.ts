@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import {
-  agentConfigSchema,
+  agentConfigDraftSchema,
   type Agent,
   type AgentConfig,
   type AgentStatus,
@@ -212,12 +212,16 @@ export async function agentRoutes(app: FastifyInstance): Promise<void> {
     }
   });
 
-  /** PUT /agents/:id/config — salva a configuração do agente. */
+  /**
+   * PUT /agents/:id/config — salva a configuração do agente.
+   * Aceita payload parcial (autosave por etapa do wizard) e faz merge com o
+   * que já estava salvo, pra uma etapa não apagar o que outra já persistiu.
+   */
   app.put<{ Params: { id: string } }>("/:id/config", async (request, reply) => {
     try {
       requireUser(request);
       const agent = await findAgentRow(request.params.id);
-      const parsed = agentConfigSchema.parse(request.body);
+      const parsed = agentConfigDraftSchema.parse(request.body);
 
       const { data: existing, error: readErr } = await db()
         .from("agent_configs")
@@ -229,7 +233,11 @@ export async function agentRoutes(app: FastifyInstance): Promise<void> {
       const previous = existing?.config as AgentConfig | undefined;
       // Token vazio no payload significa "manter o que já está salvo".
       const githubToken = parsed.githubToken || previous?.githubToken;
-      const next: AgentConfig = { ...parsed, githubToken };
+      const next = { ...previous, ...parsed, githubToken } as AgentConfig;
+
+      if (next.active && !(next.vps && next.repoPrototype && next.repoTarget)) {
+        throw new HttpError(400, "config_incomplete", "VPS e GitHub precisam estar completos para ativar o agente.");
+      }
 
       const { error: upsertErr } = await db()
         .from("agent_configs")
@@ -238,7 +246,7 @@ export async function agentRoutes(app: FastifyInstance): Promise<void> {
 
       const { error: agentUpdateErr } = await db()
         .from("agents")
-        .update({ active: next.active, vps_address: next.vps })
+        .update({ active: Boolean(next.active), vps_address: next.vps ?? null })
         .eq("id", agent.id);
       if (agentUpdateErr) throw new HttpError(502, "supabase_error", agentUpdateErr.message);
 

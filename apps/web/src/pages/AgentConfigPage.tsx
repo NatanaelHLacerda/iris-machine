@@ -1,6 +1,6 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { agentConfigSchema, type Agent, type AgentConfig } from "@iris/shared";
+import { agentConfigDraftSchema, type Agent, type AgentConfig, type AgentConfigDraft } from "@iris/shared";
 import { ZodError } from "zod";
 import { agentsApi } from "@/features/agents/agents-api";
 import { ApiRequestError } from "@/lib/api";
@@ -179,6 +179,47 @@ function Accordion({
   );
 }
 
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+
+function SaveIndicator({ status }: { status: SaveStatus }) {
+  const map: Record<SaveStatus, { text: string; color: string }> = {
+    idle: { text: "", color: "#6f7a85" },
+    saving: { text: "Salvando…", color: "#7c8894" },
+    saved: { text: "Salvo automaticamente", color: "#7CF2A6" },
+    error: { text: "Falha ao salvar", color: "#F2617A" },
+  };
+  const { text, color } = map[status];
+  if (!text) return <span style={{ fontSize: 12, color: "transparent" }}>—</span>;
+  return (
+    <span
+      style={{
+        fontFamily: "'IBM Plex Mono', monospace",
+        fontSize: 11.5,
+        color,
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+      }}
+    >
+      {status === "saving" ? "⋯" : status === "saved" ? "✓" : "!"} {text}
+    </span>
+  );
+}
+
+const STEPS = ["Conexão", "GitHub", "Convenções do projeto"] as const;
+
+/** Só envia pro autosave o que o usuário de fato preencheu — string vazia vira ausente. */
+function toDraftPayload(form: FormState): AgentConfigDraft {
+  const { githubTokenInput, ...rest } = form;
+  const draft: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(rest)) {
+    if (value === "" || value === undefined) continue;
+    draft[key] = value;
+  }
+  if (githubTokenInput) draft.githubToken = githubTokenInput;
+  return agentConfigDraftSchema.parse(draft);
+}
+
 export function AgentConfigPage() {
   const { agentId = "jimmy" } = useParams();
   const navigate = useNavigate();
@@ -191,9 +232,13 @@ export function AgentConfigPage() {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [step, setStep] = useState(0);
+  const [maxStepReached, setMaxStepReached] = useState(0);
+
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipNextAutosave = useRef(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -203,6 +248,7 @@ export function AgentConfigPage() {
         if (cancelled) return;
         setAgent(a);
         setHasStoredToken(hasGithubToken);
+        skipNextAutosave.current = true;
         setForm({
           ...emptyForm,
           ...(config ?? {}),
@@ -221,6 +267,47 @@ export function AgentConfigPage() {
       cancelled = true;
     };
   }, [agentId]);
+
+  // Autosave: debounça mudanças no form e persiste um draft parcial no servidor.
+  useEffect(() => {
+    if (loading) return;
+    if (skipNextAutosave.current) {
+      skipNextAutosave.current = false;
+      return;
+    }
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      setSaveStatus("saving");
+      setFieldErrors({});
+      setFormError(null);
+      try {
+        const payload = toDraftPayload(form);
+        const result = await agentsApi.saveConfig(agentId, payload);
+        setHasStoredToken(result.hasGithubToken);
+        if (form.githubTokenInput) {
+          setReplacingToken(false);
+          setForm((prev) => ({ ...prev, githubTokenInput: "" }));
+        }
+        setSaveStatus("saved");
+      } catch (err) {
+        if (err instanceof ZodError) {
+          const next: Record<string, string> = {};
+          for (const issue of err.issues) {
+            const key = issue.path.join(".");
+            if (key && !next[key]) next[key] = issue.message;
+          }
+          setFieldErrors(next);
+        } else if (err instanceof ApiRequestError) {
+          setFormError(err.message);
+        }
+        setSaveStatus("error");
+      }
+    }, 900);
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, agentId, loading]);
 
   const set =
     <K extends keyof FormState>(key: K) =>
@@ -249,42 +336,16 @@ export function AgentConfigPage() {
     setDepInput("");
   }
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    setFieldErrors({});
-    setFormError(null);
-    setSaved(false);
-    setSaving(true);
+  const stepValid = useMemo(() => {
+    if (step === 0) return Boolean(form.vps);
+    if (step === 1) return githubComplete;
+    return true;
+  }, [step, form.vps, githubComplete]);
 
-    try {
-      const { githubTokenInput, ...rest } = form;
-      const payload = agentConfigSchema.parse({
-        ...rest,
-        // Token vazio = manter o já salvo no servidor.
-        githubToken: githubTokenInput || undefined,
-      });
-      const result = await agentsApi.saveConfig(agentId, payload);
-      setHasStoredToken(result.hasGithubToken);
-      setReplacingToken(false);
-      setForm((prev) => ({ ...prev, githubTokenInput: "" }));
-      setSaved(true);
-    } catch (err) {
-      if (err instanceof ZodError) {
-        const next: Record<string, string> = {};
-        for (const issue of err.issues) {
-          const key = issue.path.join(".");
-          if (key && !next[key]) next[key] = issue.message;
-        }
-        setFieldErrors(next);
-        setFormError("Revise os campos destacados.");
-      } else if (err instanceof ApiRequestError) {
-        setFormError(err.message);
-      } else {
-        setFormError("Não foi possível salvar.");
-      }
-    } finally {
-      setSaving(false);
-    }
+  function goTo(target: number) {
+    if (target > maxStepReached + 1) return;
+    setStep(target);
+    setMaxStepReached((prev) => Math.max(prev, target));
   }
 
   if (loading) return <FullScreenLoader label="Carregando configuração…" />;
@@ -318,32 +379,100 @@ export function AgentConfigPage() {
           ← Voltar ao painel
         </Link>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32 }}>
-          <div
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 14,
-              overflow: "hidden",
-              flex: "0 0 auto",
-              boxShadow: "0 0 0 1px rgba(242,73,160,0.3)",
-            }}
-          >
-            <img
-              src={agent?.avatarUrl ?? "/uploads/761a440f4d38e77c845b67badf122797.jpg"}
-              alt={agent?.name}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+            marginBottom: 32,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 14,
+                overflow: "hidden",
+                flex: "0 0 auto",
+                boxShadow: "0 0 0 1px rgba(242,73,160,0.3)",
+              }}
+            >
+              <img
+                src={agent?.avatarUrl ?? "/uploads/761a440f4d38e77c845b67badf122797.jpg"}
+                alt={agent?.name}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            </div>
+            <div>
+              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Configurar {agent?.name}</h1>
+              <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, color: "#7c8894" }}>
+                {agent?.role}
+              </span>
+            </div>
           </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Configurar {agent?.name}</h1>
-            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, color: "#7c8894" }}>
-              {agent?.role}
-            </span>
-          </div>
+          <SaveIndicator status={saveStatus} />
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+        {/* Stepper */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28 }}>
+          {STEPS.map((label, index) => {
+            const active = index === step;
+            const reachable = index <= maxStepReached + 1;
+            const done = index < maxStepReached || (index < step && index <= maxStepReached);
+            return (
+              <div key={label} style={{ display: "flex", alignItems: "center", flex: index < STEPS.length - 1 ? 1 : "0 0 auto" }}>
+                <button
+                  type="button"
+                  onClick={() => reachable && goTo(index)}
+                  disabled={!reachable}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    background: "transparent",
+                    border: "none",
+                    cursor: reachable ? "pointer" : "not-allowed",
+                    padding: 0,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 12,
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      background: active ? "#F249A0" : done ? "rgba(242,73,160,0.25)" : "rgba(255,255,255,0.06)",
+                      color: active || done ? "#fff" : "#7c8894",
+                      flex: "0 0 auto",
+                    }}
+                  >
+                    {done && !active ? "✓" : index + 1}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 12.5,
+                      color: active ? "#F4EEF6" : "#7c8894",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {label}
+                  </span>
+                </button>
+                {index < STEPS.length - 1 ? (
+                  <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)", margin: "0 12px" }} />
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
           {formError ? (
             <div
               style={{
@@ -358,437 +487,429 @@ export function AgentConfigPage() {
               {formError}
             </div>
           ) : null}
-          {saved ? (
-            <div
-              style={{
-                padding: "10px 14px",
-                borderRadius: 9,
-                border: "1px solid rgba(124,242,166,0.27)",
-                background: "rgba(124,242,166,0.08)",
-                color: "#7CF2A6",
-                fontSize: 13,
-              }}
-            >
-              Configuração salva.
+
+          {step === 0 ? (
+            <>
+              {/* Identidade (somente exibição) */}
+              <div
+                style={{
+                  borderRadius: 14,
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  background: "rgba(255,255,255,0.015)",
+                  padding: 20,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 14,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 13, color: "#6f7a85" }}>🔒</span>
+                  <span
+                    style={{
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: 11,
+                      letterSpacing: "0.08em",
+                      color: "#6f7a85",
+                    }}
+                  >
+                    IDENTIDADE · definida em SOUL.md
+                  </span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {[
+                    { label: "Nome do agente", value: agent?.name },
+                    { label: "Função / especialidade", value: agent?.role },
+                    { label: "Instruções de comportamento", value: agent?.instructions },
+                  ].map((item) => (
+                    <div key={item.label}>
+                      <span style={{ display: "block", fontSize: 11.5, color: "#6f7a85", marginBottom: 3 }}>
+                        {item.label}
+                      </span>
+                      <span style={{ fontSize: 14.5, color: "#C7BECE", lineHeight: 1.55 }}>{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Conexão */}
+              <div style={cardStyle}>
+                <span style={sectionLabelStyle}>CONEXÃO</span>
+
+                <div>
+                  <span style={{ display: "block", fontSize: 11.5, color: "#6f7a85", marginBottom: 3 }}>Modelo</span>
+                  <span style={{ fontSize: 14.5, color: "#C7BECE" }}>{agent?.model}</span>
+                </div>
+
+                <Label text="Endereço VPS" required error={fieldErrors.vps}>
+                  <input
+                    type="text"
+                    value={form.vps}
+                    onChange={(e) => set("vps")(e.target.value)}
+                    placeholder="vps.hostinger.com:8443"
+                    style={inputStyle}
+                  />
+                </Label>
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                    <span style={{ fontSize: 13, color: "#b0a2ba" }}>Ativo</span>
+                    {!canActivate && !form.active ? (
+                      <span style={{ fontSize: 11.5, color: "#6f7a85" }}>
+                        Preencha VPS e a seção GitHub para poder ativar
+                      </span>
+                    ) : null}
+                  </div>
+                  <Toggle
+                    checked={form.active}
+                    disabled={!canActivate && !form.active}
+                    onChange={() => set("active")(!form.active)}
+                  />
+                </div>
+              </div>
+            </>
+          ) : null}
+
+          {step === 1 ? (
+            <div style={cardStyle}>
+              <span style={sectionLabelStyle}>GITHUB</span>
+
+              <Label
+                text="Token de acesso (PAT)"
+                required
+                hint={
+                  <>
+                    Escopo <code style={{ color: "#b0a2ba" }}>repo</code> (+{" "}
+                    <code style={{ color: "#b0a2ba" }}>workflow</code> se usar CI/CD)
+                  </>
+                }
+              >
+                {showTokenInput ? (
+                  <input
+                    type="password"
+                    value={form.githubTokenInput}
+                    onChange={(e) => set("githubTokenInput")(e.target.value)}
+                    placeholder="ghp_••••••••••••"
+                    autoComplete="off"
+                    style={inputStyle}
+                  />
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span
+                      style={{
+                        padding: "11px 14px",
+                        borderRadius: 9,
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        background: "rgba(255,255,255,0.03)",
+                        color: "#7c8894",
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontSize: 14,
+                        flex: 1,
+                      }}
+                    >
+                      ••••••••••••••••
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setReplacingToken(true)}
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: 9,
+                        border: "1px solid rgba(255,255,255,0.14)",
+                        background: "transparent",
+                        color: "#F4EEF6",
+                        fontSize: 13,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Substituir
+                    </button>
+                  </div>
+                )}
+              </Label>
+
+              <Label
+                text="Repositório protótipo"
+                required
+                hint="Referência, somente leitura"
+                error={fieldErrors.repoPrototype}
+              >
+                <input
+                  type="url"
+                  value={form.repoPrototype}
+                  onChange={(e) => set("repoPrototype")(e.target.value)}
+                  placeholder="https://github.com/org/prototipo"
+                  style={inputStyle}
+                />
+              </Label>
+
+              <Label
+                text="Repositório destino"
+                required
+                hint={`Onde o ${agent?.name ?? "agente"} escreve — precisa de permissão de escrita. Branch gerada automaticamente por tarefa (${agent?.name?.toLowerCase() ?? "agente"}/<feature>).`}
+                error={fieldErrors.repoTarget}
+              >
+                <input
+                  type="url"
+                  value={form.repoTarget}
+                  onChange={(e) => set("repoTarget")(e.target.value)}
+                  placeholder="https://github.com/org/destino"
+                  style={inputStyle}
+                />
+              </Label>
             </div>
           ) : null}
 
-          {/* Seção 1 — Identidade (somente exibição) */}
-          <div
-            style={{
-              borderRadius: 14,
-              border: "1px solid rgba(255,255,255,0.06)",
-              background: "rgba(255,255,255,0.015)",
-              padding: 20,
-              display: "flex",
-              flexDirection: "column",
-              gap: 14,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 13, color: "#6f7a85" }}>🔒</span>
-              <span
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: 11,
-                  letterSpacing: "0.08em",
-                  color: "#6f7a85",
-                }}
+          {step === 2 ? (
+            <div style={{ ...cardStyle, gap: 6 }}>
+              <span style={{ ...sectionLabelStyle, marginBottom: 6 }}>CONVENÇÕES DO PROJETO DESTINO</span>
+
+              <Accordion
+                title="Identificação"
+                open={!!openSections.identificacao}
+                onToggle={() => toggleSection("identificacao")}
               >
-                IDENTIDADE · definida em SOUL.md
-              </span>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {[
-                { label: "Nome do agente", value: agent?.name },
-                { label: "Função / especialidade", value: agent?.role },
-                { label: "Instruções de comportamento", value: agent?.instructions },
-              ].map((item) => (
-                <div key={item.label}>
-                  <span style={{ display: "block", fontSize: 11.5, color: "#6f7a85", marginBottom: 3 }}>
-                    {item.label}
-                  </span>
-                  <span style={{ fontSize: 14.5, color: "#C7BECE", lineHeight: 1.55 }}>{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Seção 2 — Conexão */}
-          <div style={cardStyle}>
-            <span style={sectionLabelStyle}>CONEXÃO</span>
-
-            <div>
-              <span style={{ display: "block", fontSize: 11.5, color: "#6f7a85", marginBottom: 3 }}>Modelo</span>
-              <span style={{ fontSize: 14.5, color: "#C7BECE" }}>{agent?.model}</span>
-            </div>
-
-            <Label text="Endereço VPS" required error={fieldErrors.vps}>
-              <input
-                type="text"
-                value={form.vps}
-                onChange={(e) => set("vps")(e.target.value)}
-                placeholder="vps.hostinger.com:8443"
-                style={inputStyle}
-              />
-            </Label>
-
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                <span style={{ fontSize: 13, color: "#b0a2ba" }}>Ativo</span>
-                {!canActivate && !form.active ? (
-                  <span style={{ fontSize: 11.5, color: "#6f7a85" }}>
-                    Preencha VPS e a seção GitHub para poder ativar
-                  </span>
+                <Label text="Nome do projeto" required error={fieldErrors.projectName}>
+                  {text("projectName")}
+                </Label>
+                <Label text="Stack" required error={fieldErrors.stack}>
+                  <Select
+                    value={form.stack}
+                    onChange={set("stack")}
+                    options={["Next.js + TypeScript", "React + Vite", "React Native + Expo"]}
+                  />
+                </Label>
+                {form.stack === "Outro" ? (
+                  <Label text="Especifique a stack">{text("stackOther", "Especifique a stack")}</Label>
                 ) : null}
-              </div>
-              <Toggle
-                checked={form.active}
-                disabled={!canActivate && !form.active}
-                onChange={() => set("active")(!form.active)}
-              />
-            </div>
-          </div>
+              </Accordion>
 
-          {/* Seção 3 — GitHub */}
-          <div style={cardStyle}>
-            <span style={sectionLabelStyle}>GITHUB</span>
+              <Accordion
+                title="Gerenciamento de estado"
+                open={!!openSections.estado}
+                onToggle={() => toggleSection("estado")}
+              >
+                <Label text="Padrão adotado">
+                  <Select
+                    value={form.statePattern ?? ""}
+                    onChange={set("statePattern")}
+                    options={["Context API", "Redux", "Zustand", "React Query"]}
+                  />
+                </Label>
+                <Label text="Convenção de organização">{text("stateOrg")}</Label>
+              </Accordion>
 
-            <Label
-              text="Token de acesso (PAT)"
-              required
-              hint={
-                <>
-                  Escopo <code style={{ color: "#b0a2ba" }}>repo</code> (+{" "}
-                  <code style={{ color: "#b0a2ba" }}>workflow</code> se usar CI/CD)
-                </>
-              }
-            >
-              {showTokenInput ? (
-                <input
-                  type="password"
-                  value={form.githubTokenInput}
-                  onChange={(e) => set("githubTokenInput")(e.target.value)}
-                  placeholder="ghp_••••••••••••"
-                  autoComplete="off"
-                  style={inputStyle}
-                />
-              ) : (
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span
-                    style={{
-                      padding: "11px 14px",
-                      borderRadius: 9,
-                      border: "1px solid rgba(255,255,255,0.12)",
-                      background: "rgba(255,255,255,0.03)",
-                      color: "#7c8894",
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: 14,
-                      flex: 1,
-                    }}
-                  >
-                    ••••••••••••••••
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setReplacingToken(true)}
-                    style={{
-                      padding: "10px 14px",
-                      borderRadius: 9,
-                      border: "1px solid rgba(255,255,255,0.14)",
-                      background: "transparent",
-                      color: "#F4EEF6",
-                      fontSize: 13,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Substituir
-                  </button>
-                </div>
-              )}
-            </Label>
+              <Accordion
+                title="Navegação/rotas"
+                open={!!openSections.navegacao}
+                onToggle={() => toggleSection("navegacao")}
+              >
+                <Label text="Mecanismo">
+                  <Select
+                    value={form.routingMech ?? ""}
+                    onChange={set("routingMech")}
+                    options={["App Router", "React Router", "React Navigation"]}
+                  />
+                </Label>
+                <Label text="Registro de rotas">{text("routesRegistry")}</Label>
+                <Label text="Transições/animações customizadas">{text("routesAnim")}</Label>
+              </Accordion>
 
-            <Label
-              text="Repositório protótipo"
-              required
-              hint="Referência, somente leitura"
-              error={fieldErrors.repoPrototype}
-            >
-              <input
-                type="url"
-                value={form.repoPrototype}
-                onChange={(e) => set("repoPrototype")(e.target.value)}
-                placeholder="https://github.com/org/prototipo"
-                style={inputStyle}
-              />
-            </Label>
+              <Accordion
+                title="Estrutura de pastas"
+                open={!!openSections.pastas}
+                onToggle={() => toggleSection("pastas")}
+              >
+                <Label text="Padrão">
+                  <Select
+                    value={form.folderPattern ?? ""}
+                    onChange={set("folderPattern")}
+                    options={["por feature", "por tipo", "colocation"]}
+                  />
+                </Label>
+                <Label text="Design system central (caminho)">{text("dsPath")}</Label>
+                <Label text="Modelos de dados/tipos (caminho)">{text("modelsPath")}</Label>
+                <Label text="Serviços/API (caminho + cliente)">{text("servicesPath")}</Label>
+              </Accordion>
 
-            <Label
-              text="Repositório destino"
-              required
-              hint={`Onde o ${agent?.name ?? "agente"} escreve — precisa de permissão de escrita. Branch gerada automaticamente por tarefa (${agent?.name?.toLowerCase() ?? "agente"}/<feature>).`}
-              error={fieldErrors.repoTarget}
-            >
-              <input
-                type="url"
-                value={form.repoTarget}
-                onChange={(e) => set("repoTarget")(e.target.value)}
-                placeholder="https://github.com/org/destino"
-                style={inputStyle}
-              />
-            </Label>
-          </div>
+              <Accordion
+                title="Estilo e nomenclatura"
+                open={!!openSections.estilo}
+                onToggle={() => toggleSection("estilo")}
+              >
+                <Label text="Nome de arquivo/pasta">{text("fileNaming")}</Label>
+                <Label text="Nome de componente">{text("componentNaming")}</Label>
+                <Label text="Estilos">
+                  <Select
+                    value={form.styleTool ?? ""}
+                    onChange={set("styleTool")}
+                    options={["Tailwind", "CSS Modules", "styled-components"]}
+                  />
+                </Label>
+                <Label text="Tipografia (fonte + onde configurada)">{text("typography")}</Label>
+              </Accordion>
 
-          {/* Seção 4 — Convenções do projeto destino */}
-          <div style={{ ...cardStyle, gap: 6 }}>
-            <span style={{ ...sectionLabelStyle, marginBottom: 6 }}>CONVENÇÕES DO PROJETO DESTINO</span>
-
-            <Accordion
-              title="4.1 Identificação"
-              open={!!openSections.identificacao}
-              onToggle={() => toggleSection("identificacao")}
-            >
-              <Label text="Nome do projeto" required error={fieldErrors.projectName}>
-                {text("projectName")}
-              </Label>
-              <Label text="Stack" required error={fieldErrors.stack}>
-                <Select
-                  value={form.stack}
-                  onChange={set("stack")}
-                  options={["Next.js + TypeScript", "React + Vite", "React Native + Expo"]}
-                />
-              </Label>
-              {form.stack === "Outro" ? (
-                <Label text="Especifique a stack">{text("stackOther", "Especifique a stack")}</Label>
-              ) : null}
-            </Accordion>
-
-            <Accordion
-              title="4.2 Gerenciamento de estado"
-              open={!!openSections.estado}
-              onToggle={() => toggleSection("estado")}
-            >
-              <Label text="Padrão adotado">
-                <Select
-                  value={form.statePattern ?? ""}
-                  onChange={set("statePattern")}
-                  options={["Context API", "Redux", "Zustand", "React Query"]}
-                />
-              </Label>
-              <Label text="Convenção de organização">{text("stateOrg")}</Label>
-            </Accordion>
-
-            <Accordion
-              title="4.3 Navegação/rotas"
-              open={!!openSections.navegacao}
-              onToggle={() => toggleSection("navegacao")}
-            >
-              <Label text="Mecanismo">
-                <Select
-                  value={form.routingMech ?? ""}
-                  onChange={set("routingMech")}
-                  options={["App Router", "React Router", "React Navigation"]}
-                />
-              </Label>
-              <Label text="Registro de rotas">{text("routesRegistry")}</Label>
-              <Label text="Transições/animações customizadas">{text("routesAnim")}</Label>
-            </Accordion>
-
-            <Accordion
-              title="4.4 Estrutura de pastas"
-              open={!!openSections.pastas}
-              onToggle={() => toggleSection("pastas")}
-            >
-              <Label text="Padrão">
-                <Select
-                  value={form.folderPattern ?? ""}
-                  onChange={set("folderPattern")}
-                  options={["por feature", "por tipo", "colocation"]}
-                />
-              </Label>
-              <Label text="Design system central (caminho)">{text("dsPath")}</Label>
-              <Label text="Modelos de dados/tipos (caminho)">{text("modelsPath")}</Label>
-              <Label text="Serviços/API (caminho + cliente)">{text("servicesPath")}</Label>
-            </Accordion>
-
-            <Accordion
-              title="4.5 Estilo e nomenclatura"
-              open={!!openSections.estilo}
-              onToggle={() => toggleSection("estilo")}
-            >
-              <Label text="Nome de arquivo/pasta">{text("fileNaming")}</Label>
-              <Label text="Nome de componente">{text("componentNaming")}</Label>
-              <Label text="Estilos">
-                <Select
-                  value={form.styleTool ?? ""}
-                  onChange={set("styleTool")}
-                  options={["Tailwind", "CSS Modules", "styled-components"]}
-                />
-              </Label>
-              <Label text="Tipografia (fonte + onde configurada)">{text("typography")}</Label>
-            </Accordion>
-
-            <Accordion
-              title="4.6 Componentes de design system"
-              open={!!openSections.componentes}
-              onToggle={() => toggleSection("componentes")}
-            >
-              {form.dsComponents.map((row, index) => (
-                <div key={index} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 8 }}>
-                  {(["name", "loc", "usage"] as const).map((field) => (
-                    <input
-                      key={field}
-                      type="text"
-                      value={row[field]}
-                      placeholder={{ name: "Componente", loc: "Localização", usage: "Uso típico" }[field]}
-                      onChange={(e) =>
+              <Accordion
+                title="Componentes de design system"
+                open={!!openSections.componentes}
+                onToggle={() => toggleSection("componentes")}
+              >
+                {form.dsComponents.map((row, index) => (
+                  <div key={index} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 8 }}>
+                    {(["name", "loc", "usage"] as const).map((field) => (
+                      <input
+                        key={field}
+                        type="text"
+                        value={row[field]}
+                        placeholder={{ name: "Componente", loc: "Localização", usage: "Uso típico" }[field]}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            dsComponents: prev.dsComponents.map((r, i) =>
+                              i === index ? { ...r, [field]: e.target.value } : r,
+                            ),
+                          }))
+                        }
+                        style={smallInputStyle}
+                      />
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() =>
                         setForm((prev) => ({
                           ...prev,
-                          dsComponents: prev.dsComponents.map((r, i) =>
-                            i === index ? { ...r, [field]: e.target.value } : r,
-                          ),
+                          dsComponents: prev.dsComponents.filter((_, i) => i !== index),
                         }))
                       }
-                      style={smallInputStyle}
-                    />
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setForm((prev) => ({
-                        ...prev,
-                        dsComponents: prev.dsComponents.filter((_, i) => i !== index),
-                      }))
-                    }
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      color: "#7c8894",
-                      cursor: "pointer",
-                      fontSize: 16,
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() =>
-                  setForm((prev) => ({
-                    ...prev,
-                    dsComponents: [...prev.dsComponents, { name: "", loc: "", usage: "" }],
-                  }))
-                }
-                style={{
-                  alignSelf: "flex-start",
-                  padding: "7px 12px",
-                  borderRadius: 7,
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  background: "transparent",
-                  color: "#F4EEF6",
-                  fontSize: 12.5,
-                  cursor: "pointer",
-                }}
-              >
-                + adicionar componente
-              </button>
-            </Accordion>
-
-            <Accordion title="4.7 Rede e dados" open={!!openSections.rede} onToggle={() => toggleSection("rede")}>
-              <Label text="Cliente HTTP">
-                <Select
-                  value={form.httpClient ?? ""}
-                  onChange={set("httpClient")}
-                  options={["fetch", "axios", "react-query", "swr"]}
-                />
-              </Label>
-              <Label text="Padrão de tratamento de erro de API">{text("errorPattern")}</Label>
-            </Accordion>
-
-            <Accordion
-              title="4.8 Dependências já presentes"
-              open={!!openSections.dependencias}
-              onToggle={() => toggleSection("dependencias")}
-            >
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-                {form.deps.map((dep, index) => (
-                  <span
-                    key={`${dep}-${index}`}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: 11.5,
-                      padding: "5px 10px",
-                      borderRadius: 999,
-                      border: "1px solid rgba(242,73,160,0.2)",
-                      color: "#b5a3c0",
-                    }}
-                  >
-                    {dep}
-                    <span
-                      className="chip-x"
-                      onClick={() => setForm((prev) => ({ ...prev, deps: prev.deps.filter((_, i) => i !== index) }))}
-                      style={{ cursor: "pointer", color: "#7c8894" }}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        color: "#7c8894",
+                        cursor: "pointer",
+                        fontSize: 16,
+                      }}
                     >
                       ×
-                    </span>
-                  </span>
+                    </button>
+                  </div>
                 ))}
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input
-                  type="text"
-                  value={depInput}
-                  placeholder="ex: zod"
-                  onChange={(e) => setDepInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addDep();
-                    }
-                  }}
-                  style={smallInputStyle}
-                />
                 <button
                   type="button"
-                  onClick={addDep}
+                  onClick={() =>
+                    setForm((prev) => ({
+                      ...prev,
+                      dsComponents: [...prev.dsComponents, { name: "", loc: "", usage: "" }],
+                    }))
+                  }
                   style={{
-                    padding: "9px 14px",
-                    borderRadius: 8,
-                    border: "none",
-                    background: "rgba(242,73,160,0.15)",
-                    color: "#F9A8D0",
+                    alignSelf: "flex-start",
+                    padding: "7px 12px",
+                    borderRadius: 7,
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    background: "transparent",
+                    color: "#F4EEF6",
                     fontSize: 12.5,
                     cursor: "pointer",
-                    whiteSpace: "nowrap",
                   }}
                 >
-                  Adicionar
+                  + adicionar componente
                 </button>
-              </div>
-            </Accordion>
+              </Accordion>
 
-            <Accordion
-              title="4.9 Observações adicionais"
-              open={!!openSections.observacoes}
-              onToggle={() => toggleSection("observacoes")}
-            >
-              <textarea
-                rows={3}
-                value={form.notes ?? ""}
-                onChange={(e) => set("notes")(e.target.value)}
-                style={{ ...inputStyle, fontSize: 13.5, resize: "vertical" }}
-              />
-            </Accordion>
-          </div>
+              <Accordion title="Rede e dados" open={!!openSections.rede} onToggle={() => toggleSection("rede")}>
+                <Label text="Cliente HTTP">
+                  <Select
+                    value={form.httpClient ?? ""}
+                    onChange={set("httpClient")}
+                    options={["fetch", "axios", "react-query", "swr"]}
+                  />
+                </Label>
+                <Label text="Padrão de tratamento de erro de API">{text("errorPattern")}</Label>
+              </Accordion>
 
-          <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+              <Accordion
+                title="Dependências já presentes"
+                open={!!openSections.dependencias}
+                onToggle={() => toggleSection("dependencias")}
+              >
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                  {form.deps.map((dep, index) => (
+                    <span
+                      key={`${dep}-${index}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontSize: 11.5,
+                        padding: "5px 10px",
+                        borderRadius: 999,
+                        border: "1px solid rgba(242,73,160,0.2)",
+                        color: "#b5a3c0",
+                      }}
+                    >
+                      {dep}
+                      <span
+                        className="chip-x"
+                        onClick={() => setForm((prev) => ({ ...prev, deps: prev.deps.filter((_, i) => i !== index) }))}
+                        style={{ cursor: "pointer", color: "#7c8894" }}
+                      >
+                        ×
+                      </span>
+                    </span>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    type="text"
+                    value={depInput}
+                    placeholder="ex: zod"
+                    onChange={(e) => setDepInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addDep();
+                      }
+                    }}
+                    style={smallInputStyle}
+                  />
+                  <button
+                    type="button"
+                    onClick={addDep}
+                    style={{
+                      padding: "9px 14px",
+                      borderRadius: 8,
+                      border: "none",
+                      background: "rgba(242,73,160,0.15)",
+                      color: "#F9A8D0",
+                      fontSize: 12.5,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Adicionar
+                  </button>
+                </div>
+              </Accordion>
+
+              <Accordion
+                title="Observações adicionais"
+                open={!!openSections.observacoes}
+                onToggle={() => toggleSection("observacoes")}
+              >
+                <textarea
+                  rows={3}
+                  value={form.notes ?? ""}
+                  onChange={(e) => set("notes")(e.target.value)}
+                  style={{ ...inputStyle, fontSize: 13.5, resize: "vertical" }}
+                />
+              </Accordion>
+            </div>
+          ) : null}
+
+          <div style={{ display: "flex", gap: 12, justifyContent: "space-between" }}>
             <button
               type="button"
-              onClick={() => navigate("/painel")}
+              onClick={() => (step === 0 ? navigate("/painel") : setStep((s) => s - 1))}
               style={{
                 padding: "12px 22px",
                 borderRadius: 10,
@@ -800,28 +921,51 @@ export function AgentConfigPage() {
                 cursor: "pointer",
               }}
             >
-              Cancelar
+              {step === 0 ? "Cancelar" : "Voltar"}
             </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="iris-button-primary"
-              style={{
-                padding: "12px 24px",
-                borderRadius: 10,
-                border: "none",
-                background: "#F249A0",
-                color: "#fff",
-                fontFamily: "'Space Grotesk', sans-serif",
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: "pointer",
-              }}
-            >
-              {saving ? "Salvando…" : "Salvar alterações"}
-            </button>
+            {step < STEPS.length - 1 ? (
+              <button
+                type="button"
+                onClick={() => goTo(step + 1)}
+                disabled={!stepValid}
+                className="iris-button-primary"
+                style={{
+                  padding: "12px 24px",
+                  borderRadius: 10,
+                  border: "none",
+                  background: "#F249A0",
+                  color: "#fff",
+                  fontFamily: "'Space Grotesk', sans-serif",
+                  fontWeight: 600,
+                  fontSize: 14,
+                  cursor: stepValid ? "pointer" : "not-allowed",
+                  opacity: stepValid ? 1 : 0.5,
+                }}
+              >
+                Próximo
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => navigate("/painel")}
+                className="iris-button-primary"
+                style={{
+                  padding: "12px 24px",
+                  borderRadius: 10,
+                  border: "none",
+                  background: "#F249A0",
+                  color: "#fff",
+                  fontFamily: "'Space Grotesk', sans-serif",
+                  fontWeight: 600,
+                  fontSize: 14,
+                  cursor: "pointer",
+                }}
+              >
+                Concluir
+              </button>
+            )}
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

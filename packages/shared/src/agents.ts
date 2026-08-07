@@ -54,6 +54,11 @@ export const agentConfigSchema = z.object({
 
 export type AgentConfig = z.infer<typeof agentConfigSchema>;
 
+/** Schema frouxo pra autosave por etapa do wizard — qualquer subconjunto de campos é válido. */
+export const agentConfigDraftSchema = agentConfigSchema.partial();
+
+export type AgentConfigDraft = z.infer<typeof agentConfigDraftSchema>;
+
 export interface ChatMessage {
   id: string;
   agentId: string;
