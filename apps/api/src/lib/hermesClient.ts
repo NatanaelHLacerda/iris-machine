@@ -260,6 +260,24 @@ function runChatTurn(agentId: string, baseUrl: string, ticket: string, text: str
   });
 }
 
+export type HermesReachability = "online" | "offline" | "error";
+
+/**
+ * Reachability real do agente — reusa o cache de token de `getAccessToken`,
+ * então na maioria das chamadas (token ainda válido) não bate na rede.
+ * "offline" = sem HERMES_AGENTS pro id; "error" = configurado mas login falhou.
+ */
+export async function getHermesStatus(agentId: string): Promise<HermesReachability> {
+  const config = getHermesAgentConfig(agentId);
+  if (!config) return "offline";
+  try {
+    await getAccessToken(agentId, config);
+    return "online";
+  } catch {
+    return "error";
+  }
+}
+
 export async function sendMessageToHermesAgent(agentId: string, text: string): Promise<string> {
   const config = getHermesAgentConfig(agentId);
   if (!config) {

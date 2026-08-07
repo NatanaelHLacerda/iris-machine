@@ -1,20 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useParams } from "react-router-dom";
 import type { Agent, ChatMessage } from "@iris/shared";
 import { agentsApi } from "@/features/agents/agents-api";
 import { useAuth } from "@/features/auth/AuthContext";
 import { FullScreenLoader } from "@/components/FullScreenLoader";
-
-const sidebarLinkStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: 12,
-  padding: "10px 12px",
-  borderRadius: 9,
-  color: "#b0a2ba",
-  fontSize: 14,
-  fontFamily: "'Space Grotesk', sans-serif",
-} as const;
+import { AppSidebar } from "@/components/AppSidebar";
+import { colors, fonts } from "@/styles/theme";
 
 export function ChatPage() {
   const { agentId = "jimmy" } = useParams();
@@ -24,12 +15,14 @@ export function ChatPage() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     let cancelled = false;
     setLoading(true);
+    setLoadError(null);
     Promise.all([agentsApi.get(agentId), agentsApi.messages(agentId)])
       .then(([{ agent: a }, { messages: m }]) => {
         if (cancelled) return;
@@ -37,7 +30,7 @@ export function ChatPage() {
         setMessages(m);
       })
       .catch(() => {
-        if (!cancelled) setError("Não foi possível carregar a conversa.");
+        if (!cancelled) setLoadError("Não foi possível carregar a conversa.");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -46,6 +39,8 @@ export function ChatPage() {
       cancelled = true;
     };
   }, [agentId]);
+
+  useEffect(() => load(), [load]);
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -58,14 +53,28 @@ export function ChatPage() {
     const text = input.trim();
     if (!text || isTyping) return;
 
+    // Otimista: a mensagem do usuário aparece na hora, sem esperar o
+    // agente responder (podia levar até 2min e a mensagem sumia da tela
+    // até lá — ver hermesClient.ts CHAT_TIMEOUT_MS).
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMessage: ChatMessage = {
+      id: tempId,
+      agentId,
+      author: "user",
+      content: text,
+      createdAt: new Date().toISOString(),
+    };
+
     setInput("");
+    setSendError(null);
+    setMessages((prev) => [...prev, optimisticMessage]);
     setIsTyping(true);
-    setError(null);
     try {
       const { messages: created } = await agentsApi.sendMessage(agentId, text);
-      setMessages((prev) => [...prev, ...created]);
+      setMessages((prev) => [...prev.filter((m) => m.id !== tempId), ...created]);
     } catch {
-      setError("Falha ao enviar a mensagem.");
+      setSendError("Falha ao enviar a mensagem.");
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
       setInput(text);
     } finally {
       setIsTyping(false);
@@ -86,6 +95,45 @@ export function ChatPage() {
 
   if (loading) return <FullScreenLoader label="Abrindo conversa…" />;
 
+  if (loadError) {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 14,
+          background: colors.bg,
+          color: colors.text,
+          fontFamily: fonts.body,
+        }}
+      >
+        <span role="alert" style={{ color: colors.danger, fontSize: 14 }}>
+          {loadError}
+        </span>
+        <button
+          type="button"
+          onClick={load}
+          className="iris-button-primary"
+          style={{
+            padding: "9px 16px",
+            borderRadius: 8,
+            border: "none",
+            background: colors.accent,
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: "pointer",
+          }}
+        >
+          Tentar novamente
+        </button>
+      </div>
+    );
+  }
+
   const greeting: ChatMessage[] = agent
     ? [
         {
@@ -105,60 +153,22 @@ export function ChatPage() {
       style={{
         height: "100vh",
         width: "100%",
-        background: "#0B0910",
-        color: "#F4EEF6",
-        fontFamily: "'Space Grotesk', sans-serif",
+        background: colors.bg,
+        color: colors.text,
+        fontFamily: fonts.body,
         display: "grid",
         gridTemplateColumns: "240px 1fr",
         overflow: "hidden",
       }}
     >
-      <aside
-        style={{
-          borderRight: "1px solid rgba(255,255,255,0.08)",
-          display: "flex",
-          flexDirection: "column",
-          gap: 4,
-          padding: "18px 12px",
-        }}
-      >
-        <Link to="/painel" className="iris-nav-item" style={sidebarLinkStyle}>
-          <span style={{ fontSize: 16, width: 18, textAlign: "center" }}>◧</span>Painel
-        </Link>
-        <Link to={`/agentes/${agentId}/configuracao`} className="iris-nav-item" style={sidebarLinkStyle}>
-          <span style={{ fontSize: 16, width: 18, textAlign: "center" }}>⚙</span>Configurações
-        </Link>
-
-        <div
-          style={{
-            marginTop: "auto",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "10px 12px",
-            borderRadius: 10,
-          }}
-        >
-          <div style={{ width: 30, height: 30, borderRadius: "50%", overflow: "hidden", flex: "0 0 auto" }}>
-            <img
-              src={user?.avatarUrl ?? "/uploads/761a440f4d38e77c845b67badf122797.jpg"}
-              alt="usuário"
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          </div>
-          <span
-            style={{
-              fontSize: 13,
-              color: "#F4EEF6",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {user?.name ?? user?.email}
-          </span>
-        </div>
-      </aside>
+      <AppSidebar
+        links={[
+          { to: "/painel", icon: "◧", label: "Painel", active: false },
+          { to: `/agentes/${agentId}/configuracao`, icon: "⚙", label: "Configurações", active: false },
+        ]}
+        userName={user?.name ?? user?.email ?? ""}
+        userAvatar={user?.avatarUrl ?? "/uploads/761a440f4d38e77c845b67badf122797.jpg"}
+      />
 
       <div
         style={{
@@ -175,7 +185,7 @@ export function ChatPage() {
             alignItems: "center",
             justifyContent: "space-between",
             padding: "16px clamp(20px, 3vw, 40px)",
-            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            borderBottom: `1px solid ${colors.border}`,
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -192,15 +202,15 @@ export function ChatPage() {
               <img src={avatar} alt={agent?.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <span style={{ fontWeight: 600, fontSize: 15, color: "#F4EEF6" }}>{agent?.name}</span>
+              <span style={{ fontWeight: 600, fontSize: 15, color: colors.text }}>{agent?.name}</span>
               <span
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 5,
-                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontFamily: fonts.mono,
                   fontSize: 10.5,
-                  color: "#7c8894",
+                  color: colors.textDim,
                   letterSpacing: "0.04em",
                 }}
               >
@@ -219,7 +229,7 @@ export function ChatPage() {
           </div>
           <span
             style={{
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: fonts.display,
               fontWeight: 700,
               fontSize: 13,
               letterSpacing: "0.22em",
@@ -233,6 +243,9 @@ export function ChatPage() {
 
         <div
           ref={scrollRef}
+          role="log"
+          aria-live="polite"
+          aria-label="Mensagens da conversa"
           style={{
             flex: "1 1 auto",
             overflowY: "auto",
@@ -277,12 +290,13 @@ export function ChatPage() {
                     style={{
                       padding: "12px 16px",
                       borderRadius: isAgent ? "4px 16px 16px 16px" : "16px 4px 16px 16px",
-                      background: isAgent ? "rgba(255,255,255,0.04)" : "#F249A0",
-                      border: isAgent ? "1px solid rgba(255,255,255,0.08)" : "none",
+                      background: isAgent ? "rgba(255,255,255,0.04)" : colors.accent,
+                      border: isAgent ? `1px solid ${colors.border}` : "none",
                       fontSize: 14.5,
                       lineHeight: 1.55,
                       color: isAgent ? "#E7DCE9" : "#ffffff",
                       whiteSpace: "pre-wrap",
+                      opacity: msg.id.startsWith("temp-") ? 0.7 : 1,
                     }}
                   >
                     {msg.content}
@@ -300,11 +314,12 @@ export function ChatPage() {
                 <img src={avatar} alt={agent?.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               </div>
               <div
+                aria-label={`${agent?.name ?? "Agente"} está digitando`}
                 style={{
                   padding: "14px 16px",
                   borderRadius: "4px 16px 16px 16px",
                   background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.08)",
+                  border: `1px solid ${colors.border}`,
                   display: "flex",
                   gap: 5,
                   alignItems: "center",
@@ -338,8 +353,10 @@ export function ChatPage() {
             boxSizing: "border-box",
           }}
         >
-          {error ? (
-            <div style={{ marginBottom: 10, fontSize: 12.5, color: "#F2617A", textAlign: "center" }}>{error}</div>
+          {sendError ? (
+            <div role="alert" style={{ marginBottom: 10, fontSize: 12.5, color: colors.danger, textAlign: "center" }}>
+              {sendError}
+            </div>
           ) : null}
           <div
             style={{
@@ -348,8 +365,8 @@ export function ChatPage() {
               gap: 10,
               padding: "10px 10px 10px 18px",
               borderRadius: 16,
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              background: colors.bgSubtle,
+              border: `1px solid ${colors.borderStrong}`,
               backdropFilter: "blur(10px)",
             }}
           >
@@ -365,8 +382,8 @@ export function ChatPage() {
                 background: "transparent",
                 border: "none",
                 outline: "none",
-                color: "#F4EEF6",
-                fontFamily: "'Space Grotesk', sans-serif",
+                color: colors.text,
+                fontFamily: fonts.body,
                 fontSize: 14.5,
                 lineHeight: 1.5,
                 padding: "6px 0",
@@ -382,7 +399,7 @@ export function ChatPage() {
                 height: 36,
                 borderRadius: 10,
                 border: "none",
-                background: "#F249A0",
+                background: colors.accent,
                 color: "#ffffff",
                 fontSize: 16,
                 display: "flex",
@@ -398,7 +415,7 @@ export function ChatPage() {
             style={{
               textAlign: "center",
               marginTop: 10,
-              fontFamily: "'IBM Plex Mono', monospace",
+              fontFamily: fonts.mono,
               fontSize: 10.5,
               color: "#59636d",
               letterSpacing: "0.03em",

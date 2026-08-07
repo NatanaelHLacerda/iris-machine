@@ -197,3 +197,19 @@ select:focus {
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+@keyframes iris-shimmer {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.iris-skeleton {
+  animation: iris-shimmer 1.4s ease-in-out infinite;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}

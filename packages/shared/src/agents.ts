@@ -61,3 +61,11 @@ export interface ChatMessage {
   content: string;
   createdAt: string;
 }
+
+/** Métricas agregadas reais, calculadas a partir das mensagens e agentes persistidos. */
+export interface DashboardStats {
+  activeAgents: number;
+  conversationsToday: number;
+  /** Média (segundos) entre mensagem do usuário e resposta do agente. `null` sem dados suficientes. */
+  avgResponseSeconds: number | null;
+}

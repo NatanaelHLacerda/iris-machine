@@ -62,8 +62,8 @@ Base: `http://localhost:3333`
 | POST | `/auth/password/reset` | — | Dispara e-mail de recuperação (sempre 204) |
 | PATCH | `/auth/password` | Bearer | Troca a senha do usuário logado |
 
-Rotas de agentes (todas exigem Bearer): `GET /agents`, `GET /agents/:id`,
-`GET|PUT /agents/:id/config`, `GET|POST /agents/:id/messages`.
+Rotas de agentes (todas exigem Bearer): `GET /agents`, `GET /agents/stats`,
+`GET /agents/:id`, `GET|PUT /agents/:id/config`, `GET|POST /agents/:id/messages`.
 
 ### Modelo de sessão
 
@@ -106,10 +106,21 @@ em domínios distintos — e por isso a API tem que estar sob HTTPS.
 
 ## Estado atual
 
-Autenticação está de fato persistida no Supabase. Agentes, configurações e mensagens
-usam **armazenamento em memória** (`apps/api/src/routes/agents.ts`) como placeholder —
-reiniciar a API zera esses dados. Próximo passo: criar as tabelas no Supabase com RLS
-por usuário e trocar o store em memória por consultas reais.
+Autenticação, agentes, configurações e mensagens estão persistidos no Supabase
+(`supabase/migrations/0001_agents_persistence.sql`). Rode essa migration no seu
+projeto (SQL Editor do Supabase ou `supabase db push`) antes de subir a API —
+sem ela `GET /agents` e afins respondem `500 supabase_not_configured`/erro de tabela
+inexistente.
+
+Tabelas: `agents`, `agent_configs`, `messages`. RLS ligada sem nenhuma policy —
+só a API, via `SUPABASE_SERVICE_ROLE_KEY`, consegue ler/gravar; `anon` e
+`authenticated` ficam bloqueados por completo (o front nunca fala com essas
+tabelas direto, só através da API).
+
+`conversations`, `lastRunAt` e `status` do agente nunca são armazenados como
+valor fixo — são calculados a cada request a partir de `messages` e de um
+reachability check real no Hermes (`GET /agents/stats` idem, agregando todos
+os agentes). Isso elimina os números mockados que existiam antes no painel.
 
 ## Telas
 
