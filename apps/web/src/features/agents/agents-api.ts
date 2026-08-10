@@ -1,4 +1,11 @@
-import type { Agent, AgentConfig, AgentConfigDraft, ChatMessage, DashboardStats } from "@iris/shared";
+import type {
+  Agent,
+  AgentConfig,
+  AgentConfigDraft,
+  ChatMessage,
+  CreateAgentInput,
+  DashboardStats,
+} from "@iris/shared";
 import { apiFetch } from "@/lib/api";
 
 /** Config devolvida pela API — o token do GitHub nunca volta, só a indicação de que existe. */
@@ -11,6 +18,9 @@ export interface AgentConfigResponse {
 
 export const agentsApi = {
   list: () => apiFetch<{ agents: Agent[] }>("/agents"),
+
+  create: (input: CreateAgentInput) =>
+    apiFetch<{ agent: Agent }>("/agents", { method: "POST", body: input }),
 
   stats: () => apiFetch<{ stats: DashboardStats }>("/agents/stats"),
 

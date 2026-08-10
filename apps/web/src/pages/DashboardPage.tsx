@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { Agent, AgentStatus, DashboardStats } from "@iris/shared";
 import { agentsApi } from "@/features/agents/agents-api";
+import { NewAgentModal } from "@/features/agents/NewAgentModal";
 import { useAuth } from "@/features/auth/AuthContext";
 import { AppSidebar } from "@/components/AppSidebar";
 import { colors, fonts } from "@/styles/theme";
@@ -67,6 +68,7 @@ export function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showNewAgent, setShowNewAgent] = useState(false);
 
   const load = useCallback(() => {
     let cancelled = false;
@@ -123,7 +125,27 @@ export function DashboardPage() {
               VPS Hostinger · conexão estável
             </span>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowNewAgent(true)}
+            style={{
+              padding: "10px 18px",
+              borderRadius: 10,
+              border: "none",
+              background: colors.accent,
+              color: "#fff",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            + Novo agente
+          </button>
         </header>
+
+        {showNewAgent ? (
+          <NewAgentModal onClose={() => setShowNewAgent(false)} onCreated={load} />
+        ) : null}
 
         {error ? (
           <div

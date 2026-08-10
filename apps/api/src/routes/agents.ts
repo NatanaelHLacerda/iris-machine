@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import {
   agentConfigDraftSchema,
+  createAgentSchema,
   type Agent,
   type AgentConfig,
   type AgentStatus,
@@ -60,6 +61,29 @@ async function listAgentRows(): Promise<AgentRow[]> {
   const { data, error } = await db().from("agents").select("*").order("name");
   if (error) throw new HttpError(502, "supabase_error", error.message);
   return (data ?? []) as AgentRow[];
+}
+
+function slugify(name: string): string {
+  return (
+    name
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "agente"
+  );
+}
+
+/** Gera um id único a partir do nome, sufixando -2, -3... se já existir. */
+async function uniqueAgentId(name: string): Promise<string> {
+  const base = slugify(name);
+  for (let suffix = 0; suffix < 50; suffix++) {
+    const candidate = suffix === 0 ? base : `${base}-${suffix + 1}`;
+    const { data, error } = await db().from("agents").select("id").eq("id", candidate).maybeSingle();
+    if (error) throw new HttpError(502, "supabase_error", error.message);
+    if (!data) return candidate;
+  }
+  throw new HttpError(409, "agent_id_conflict", "Não foi possível gerar um id único para o agente");
 }
 
 async function messagesForAgent(agentId: string): Promise<MessageRow[]> {
@@ -129,6 +153,34 @@ export async function agentRoutes(app: FastifyInstance): Promise<void> {
       const rows = await listAgentRows();
       const agents = await Promise.all(rows.map(toAgent));
       return reply.send({ agents });
+    } catch (err) {
+      return sendError(reply, err);
+    }
+  });
+
+  /** POST /agents — cria um agente novo (id gerado a partir do nome). */
+  app.post("/", async (request, reply) => {
+    try {
+      requireUser(request);
+      const parsed = createAgentSchema.parse(request.body);
+      const id = await uniqueAgentId(parsed.name);
+
+      const { data, error } = await db()
+        .from("agents")
+        .insert({
+          id,
+          name: parsed.name,
+          role: parsed.role,
+          instructions: parsed.instructions,
+          model: parsed.model,
+          vps_address: parsed.vpsAddress || null,
+          active: false,
+        })
+        .select("*")
+        .single();
+      if (error) throw new HttpError(502, "supabase_error", error.message);
+
+      return reply.status(201).send({ agent: await toAgent(data as AgentRow) });
     } catch (err) {
       return sendError(reply, err);
     }

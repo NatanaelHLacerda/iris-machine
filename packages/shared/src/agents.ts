@@ -54,6 +54,16 @@ export const agentConfigSchema = z.object({
 
 export type AgentConfig = z.infer<typeof agentConfigSchema>;
 
+export const createAgentSchema = z.object({
+  name: z.string().trim().min(1, "Nome é obrigatório"),
+  role: z.string().trim().min(1, "Papel é obrigatório"),
+  instructions: z.string().trim().default(""),
+  model: z.string().trim().min(1, "Modelo é obrigatório"),
+  vpsAddress: z.string().trim().optional(),
+});
+
+export type CreateAgentInput = z.infer<typeof createAgentSchema>;
+
 /** Schema frouxo pra autosave por etapa do wizard — qualquer subconjunto de campos é válido. */
 export const agentConfigDraftSchema = agentConfigSchema.partial();
 
