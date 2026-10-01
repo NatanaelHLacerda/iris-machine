@@ -1,21 +1,16 @@
 {
-  "name": "iris-machine",
-  "version": "0.1.0",
-  "private": true,
-  "packageManager": "pnpm@9.15.0",
-  "engines": {
-    "node": ">=20"
-  },
-  "scripts": {
-    "dev": "pnpm --filter @iris/shared build && pnpm --parallel -r dev",
-    "dev:web": "pnpm --filter @iris/shared build && pnpm --filter @iris/web dev",
-    "dev:api": "pnpm --filter @iris/shared build && pnpm --filter @iris/api dev",
-    "build": "pnpm --filter @iris/shared build && pnpm --parallel --filter \"./apps/*\" build",
-    "typecheck": "pnpm -r typecheck",
-    "lint": "pnpm -r lint",
-    "clean": "pnpm -r exec rm -rf dist node_modules/.vite"
-  },
-  "devDependencies": {
-    "typescript": "^5.7.3"
-  }
+    "$schema": "https://www.schemastore.org/package.json",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "vite build",
+        "dev": "vite"
+    },
+    "devDependencies": {
+        "laravel-vite-plugin": "^3.1",
+        "vite": "^8.0.0"
+    },
+    "dependencies": {
+        "gsap": "^3.15.0"
+    }
 }

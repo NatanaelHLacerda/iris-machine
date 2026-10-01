@@ -1,0 +1,13 @@
+# Ambiente de desenvolvimento sem precisar de PHP instalado na máquina.
+#   docker compose up            -> http://localhost:8000
+#   docker compose run --rm app php artisan test
+services:
+  app:
+    image: composer:2
+    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    command: php artisan serve --host=0.0.0.0 --port=8000
