@@ -245,64 +245,10 @@ function initPlanLinks() {
     });
 }
 
-/* ---------- Captura de lead via fetch (o POST normal segue funcionando sem JS) ---------- */
+/* ---------- Formulário só visual: o envio será ligado ao backend depois ---------- */
 function initLeadForm() {
     const form = document.querySelector('[data-lead-form]');
-    const success = document.querySelector('[data-lead-success]');
-    if (!form || !success) return;
+    if (!form) return;
 
-    const button = form.querySelector('[type="submit"]');
-    const label = form.querySelector('[data-submit-label]');
-    const idleLabel = label.textContent;
-
-    const showErrors = (errors) => {
-        $$('[data-error]', form).forEach((slot) => (slot.textContent = ''));
-        $$('[aria-invalid]', form).forEach((input) => input.removeAttribute('aria-invalid'));
-
-        Object.entries(errors).forEach(([field, messages]) => {
-            const slot = form.querySelector(`[data-error="${field}"]`) ?? form.querySelector('[data-error="form"]');
-            slot.textContent = messages[0];
-            form.elements[field]?.setAttribute?.('aria-invalid', 'true');
-        });
-
-        const firstInvalid = form.querySelector('[aria-invalid="true"]');
-        firstInvalid?.focus();
-        if (motion) gsap.fromTo(form, { x: -8 }, { x: 0, duration: 0.4, ease: 'elastic.out(1, 0.35)' });
-    };
-
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        button.disabled = true;
-        label.textContent = 'Enviando…';
-
-        try {
-            const response = await fetch(form.action, {
-                method: 'POST',
-                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                body: new FormData(form),
-            });
-            const data = await response.json().catch(() => ({}));
-
-            if (response.ok) {
-                success.querySelector('[data-lead-success-text]').textContent = data.message;
-                form.hidden = true;
-                success.hidden = false;
-                if (motion) {
-                    gsap.from(success.children, { autoAlpha: 0, y: 16, duration: DUR.standard, ease: EASE, stagger: 0.08 });
-                    gsap.from(success.querySelector('.form-success__icon'), { scale: 0, duration: 0.5, ease: 'back.out(2.2)' });
-                }
-                return;
-            }
-
-            if (response.status === 422) showErrors(data.errors ?? {});
-            else if (response.status === 419) showErrors({ form: ['Sua sessão expirou. Recarregue a página e tente de novo.'] });
-            else if (response.status === 429) showErrors({ form: ['Muitas tentativas. Aguarde um minuto e tente de novo.'] });
-            else showErrors({ form: ['Algo deu errado por aqui. Tente novamente em instantes.'] });
-        } catch {
-            showErrors({ form: ['Sem conexão no momento. Verifique sua internet e tente de novo.'] });
-        } finally {
-            button.disabled = false;
-            label.textContent = idleLabel;
-        }
-    });
+    form.addEventListener('submit', (event) => event.preventDefault());
 }

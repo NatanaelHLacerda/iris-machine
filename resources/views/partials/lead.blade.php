@@ -14,61 +14,59 @@
         </div>
 
         <div class="form-card" data-reveal>
-            <div class="form-success" data-lead-success role="status" @unless (session('lead_ok')) hidden @endunless>
+            <div class="form-success" data-lead-success role="status" hidden>
                 <span class="form-success__icon" aria-hidden="true">✓</span>
                 <h3>Contato recebido!</h3>
-                <p data-lead-success-text>{{ session('lead_ok') }}</p>
+                <p data-lead-success-text></p>
             </div>
 
-            <form class="form" method="POST" action="{{ route('leads.store') }}" data-lead-form novalidate @if (session('lead_ok')) hidden @endif>
-                @csrf
-
+            <form class="form" method="POST" action="#" data-lead-form novalidate>
                 <div class="field">
                     <label for="lead-name">Nome</label>
-                    <input id="lead-name" name="name" type="text" value="{{ old('name') }}" autocomplete="name" required maxlength="120" placeholder="Como podemos te chamar?" @error('name') aria-invalid="true" @enderror>
-                    <p class="field__error" data-error="name">@error('name'){{ $message }}@enderror</p>
+                    <input id="lead-name" name="name" type="text" autocomplete="name" required maxlength="120" placeholder="Como podemos te chamar?">
+                    <p class="field__error" data-error="name"></p>
                 </div>
 
                 <div class="field-row">
                     <div class="field">
                         <label for="lead-email">E-mail</label>
-                        <input id="lead-email" name="email" type="email" value="{{ old('email') }}" autocomplete="email" required maxlength="160" placeholder="voce@email.com" @error('email') aria-invalid="true" @enderror>
-                        <p class="field__error" data-error="email">@error('email'){{ $message }}@enderror</p>
+                        <input id="lead-email" name="email" type="email" autocomplete="email" required maxlength="160" placeholder="voce@email.com">
+                        <p class="field__error" data-error="email"></p>
                     </div>
                     <div class="field">
                         <label for="lead-whatsapp">WhatsApp <small>(opcional)</small></label>
-                        <input id="lead-whatsapp" name="whatsapp" type="tel" value="{{ old('whatsapp') }}" autocomplete="tel" maxlength="30" placeholder="(00) 00000-0000">
-                        <p class="field__error" data-error="whatsapp">@error('whatsapp'){{ $message }}@enderror</p>
+                        <input id="lead-whatsapp" name="whatsapp" type="tel" autocomplete="tel" maxlength="30" placeholder="(00) 00000-0000">
+                        <p class="field__error" data-error="whatsapp"></p>
                     </div>
                 </div>
 
                 <div class="field-row">
                     <div class="field">
                         <label for="lead-level">Seu momento</label>
-                        <select id="lead-level" name="level" required @error('level') aria-invalid="true" @enderror>
-                            <option value="" disabled @selected(! old('level'))>Selecione</option>
+                        <select id="lead-level" name="level" required>
+                            <option value="" disabled selected>Selecione</option>
                             @foreach ($site['levels'] as $value => $label)
-                                <option value="{{ $value }}" @selected(old('level') === $value)>{{ $label }}</option>
+                                <option value="{{ $value }}">{{ $label }}</option>
                             @endforeach
                         </select>
-                        <p class="field__error" data-error="level">@error('level'){{ $message }}@enderror</p>
+                        <p class="field__error" data-error="level"></p>
                     </div>
                     <div class="field">
                         <label for="lead-plan">Formato de interesse</label>
                         <select id="lead-plan" name="plan">
                             <option value="">Ainda não sei</option>
                             @foreach ($site['plans'] as $plan)
-                                <option value="{{ $plan['slug'] }}" @selected(old('plan') === $plan['slug'])>{{ $plan['name'] }}</option>
+                                <option value="{{ $plan['slug'] }}">{{ $plan['name'] }}</option>
                             @endforeach
                         </select>
-                        <p class="field__error" data-error="plan">@error('plan'){{ $message }}@enderror</p>
+                        <p class="field__error" data-error="plan"></p>
                     </div>
                 </div>
 
                 <div class="field">
                     <label for="lead-goal">O que você quer destravar? <small>(opcional)</small></label>
-                    <textarea id="lead-goal" name="goal" rows="3" maxlength="1000" placeholder="Ex.: quero usar agentes no meu TCC sem virar refém da IA">{{ old('goal') }}</textarea>
-                    <p class="field__error" data-error="goal">@error('goal'){{ $message }}@enderror</p>
+                    <textarea id="lead-goal" name="goal" rows="3" maxlength="1000" placeholder="Ex.: quero usar agentes no meu TCC sem virar refém da IA"></textarea>
+                    <p class="field__error" data-error="goal"></p>
                 </div>
 
                 <div class="field field--hp" aria-hidden="true">
@@ -76,7 +74,7 @@
                     <input id="lead-site" name="site" type="text" tabindex="-1" autocomplete="off">
                 </div>
 
-                <p class="field__error field__error--form" data-error="form">@error('site'){{ $message }}@enderror</p>
+                <p class="field__error field__error--form" data-error="form"></p>
 
                 <button class="btn btn--primary btn--block" type="submit">
                     <span data-submit-label>Quero agendar minha conversa</span> <span class="btn__arrow" aria-hidden="true">→</span>
