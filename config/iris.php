@@ -20,11 +20,6 @@ return [
         'title' => 'Saia do nível júnior usando IA',
         'accent' => 'do jeito certo',
         'text' => 'Consultoria em IA aplicada para desenvolvedores júnior. Aprenda a usar agentes, skills e Claude Code no seu dia a dia, entregue mais rápido e se destaque no time desde o primeiro projeto.',
-        'gallery' => [
-            ['src' => 'images/hero-chuva.jpg', 'alt' => 'Ilustração cyberpunk de personagem olhando para a chuva na cidade'],
-            ['src' => 'images/hero-olhar.jpg', 'alt' => 'Ilustração em estilo mangá de um olhar determinado'],
-            ['src' => 'images/hero-ciborgue.jpg', 'alt' => 'Ilustração de personagem ciborgue'],
-        ],
     ],
 
     'modules' => [

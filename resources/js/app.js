@@ -23,7 +23,6 @@ if (motion) {
     initMagnetic();
     initIntro();
     initScrollReveals();
-    initGalleryParallax();
     initTerminal();
 }
 
@@ -110,13 +109,7 @@ function initIntro() {
 
     tl.from('.nav', { y: -24, autoAlpha: 0, duration: DUR.standard }, '-=0.35')
         .from(words, { yPercent: 110, duration: DUR.slow, stagger: 0.045 }, '<')
-        .fromTo('[data-hero-item]', { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: DUR.standard, stagger: 0.09 }, '<0.25')
-        .fromTo(
-            '[data-gallery-item]',
-            { autoAlpha: 0, y: 40, clipPath: 'inset(100% 0% 0% 0% round 18px)' },
-            { autoAlpha: 1, y: 0, clipPath: 'inset(0% 0% 0% 0% round 18px)', duration: 1.1, stagger: 0.12, ease: 'power4.out', clearProps: 'clipPath' },
-            '<',
-        );
+        .fromTo('[data-hero-item]', { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: DUR.standard, stagger: 0.09 }, '<0.25');
 }
 
 /* ---------- Reveals no scroll ---------- */
@@ -135,20 +128,6 @@ function initScrollReveals() {
         once: true,
         onEnter: (batch) =>
             gsap.to(batch, { autoAlpha: 1, y: 0, duration: DUR.standard, ease: EASE, stagger: 0.08, overwrite: true, clearProps: 'transform' }),
-    });
-}
-
-/* ---------- Parallax da galeria (só desktop) ---------- */
-function initGalleryParallax() {
-    gsap.matchMedia().add('(min-width: 901px)', () => {
-        $$('[data-gallery-item]').forEach((item) => {
-            gsap.to(item.querySelector('img'), {
-                yPercent: Number(item.dataset.speed) || 0,
-                scale: 1.12,
-                ease: 'none',
-                scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 0.6 },
-            });
-        });
     });
 }
 

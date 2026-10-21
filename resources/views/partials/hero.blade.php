@@ -20,13 +20,5 @@
                 <a href="#trilha" class="btn btn--link">Ver a trilha</a>
             </div>
         </div>
-
-        <div class="gallery">
-            @foreach ($site['hero']['gallery'] as $i => $image)
-                <figure class="gallery__item gallery__item--{{ $i + 1 }}" data-gallery-item data-speed="{{ [-6, 8, -10][$i] ?? 0 }}">
-                    <img src="{{ asset($image['src']) }}" alt="{{ $image['alt'] }}" @if ($i === 0) fetchpriority="high" @else loading="lazy" @endif decoding="async">
-                </figure>
-            @endforeach
-        </div>
     </div>
 </section>
