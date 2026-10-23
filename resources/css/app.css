@@ -181,11 +181,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
     gap: 64px; align-items: center;
     padding-block: 64px;
 }
-.hero__copy { display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center; }
+.hero__copy { display: flex; flex-direction: column; align-items: flex-start; gap: 24px; }
 .hero__title { font-weight: 700; font-size: clamp(2.5rem, 3vw + 1.25rem, 4.5rem); line-height: 1.04; letter-spacing: -0.03em; max-width: 18ch; text-wrap: balance; }
 .hero__text { font-size: clamp(16px, 1.2vw, 19px); color: var(--muted); max-width: 52ch; text-wrap: pretty; }
 .hero__title .accent { white-space: nowrap; }
-.hero__actions { display: flex; gap: 16px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+.hero__actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .hero__actions .btn { min-height: 56px; padding-inline: 32px; }
 
 .hero__eyebrow {
@@ -195,7 +195,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text);
 }
 .hero__eyebrow-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 0 4px rgba(242, 73, 160, 0.2); }
-.hero__benefits { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 32px; }
+.hero__benefits { display: grid; gap: 8px; }
 .hero__benefits li { position: relative; padding-left: 32px; color: var(--text); font-size: 16px; }
 .hero__benefits li::before {
     content: '✓'; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
@@ -378,7 +378,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
     .hero { min-height: 0; }
     .hero__inner { grid-template-columns: minmax(0, 1fr); gap: 48px; padding-block: 40px 56px; }
     .hero__actions .btn { width: 100%; }
-    .hero__benefits { flex-direction: column; align-items: flex-start; text-align: left; }
     .hero__note { text-align: center; align-self: stretch; }
     .split { grid-template-columns: minmax(0, 1fr); }
     .plans { grid-template-columns: minmax(0, 1fr); }
