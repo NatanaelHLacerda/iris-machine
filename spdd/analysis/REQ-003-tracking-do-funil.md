@@ -1,5 +1,5 @@
 # Análise — REQ-003 Tracking do funil
-**Status:** RASCUNHO
+**Status:** APROVADO — por delegação (semente aprovada em 2026-10-23)
 
 ## Conceitos
 

@@ -1,5 +1,5 @@
 # Análise — REQ-001 Acesso ao `/gestao-crm`
-**Status:** RASCUNHO
+**Status:** APROVADO — por delegação (semente aprovada em 2026-10-23)
 
 ## Conceitos
 

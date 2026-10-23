@@ -1,5 +1,5 @@
 # REQ-008 — Dashboard de growth
-**Status:** RASCUNHO
+**Status:** APROVADO — Natanael, 2026-10-23, segue a cadeia (*"aprovado, siga todas as cadeias de ponta a ponta automizadas."*): decisões pendentes na recomendação.
 **Origem:** conversa de 2026-10-23 (*"O crm irá me ajudar a gerir o crescimento da minha empresa"*, *"foque em growth"*, meta R$ 4.000/mês)
 
 ## Contexto

@@ -1,5 +1,5 @@
 # REQ-009 — Dados de demonstração
-**Status:** RASCUNHO
+**Status:** APROVADO — Natanael, 2026-10-23, segue a cadeia (*"aprovado, siga todas as cadeias de ponta a ponta automizadas."*): decisões pendentes na recomendação.
 **Origem:** conversa de 2026-10-23 (*"utilize dados mockados para preencher nosso crm para termos uma noção do futuro"*)
 
 ## Contexto

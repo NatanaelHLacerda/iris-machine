@@ -1,5 +1,5 @@
 # REASONS — REQ-006 Investimento em Meta Ads
-**Status:** RASCUNHO — depende da `DP-0601` (canvas escrito para CSV + manual)
+**Status:** APROVADO — por delegação (semente aprovada em 2026-10-23)
 
 ## R — Requirements
 

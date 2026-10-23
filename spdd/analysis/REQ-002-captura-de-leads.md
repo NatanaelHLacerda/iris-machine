@@ -1,5 +1,5 @@
 # Análise — REQ-002 Captura de leads
-**Status:** RASCUNHO
+**Status:** APROVADO — por delegação (semente aprovada em 2026-10-23)
 
 ## Conceitos
 

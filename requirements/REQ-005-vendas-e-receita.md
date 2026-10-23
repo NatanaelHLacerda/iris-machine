@@ -1,5 +1,5 @@
 # REQ-005 — Vendas e receita
-**Status:** RASCUNHO
+**Status:** APROVADO — Natanael, 2026-10-23, segue a cadeia (*"aprovado, siga todas as cadeias de ponta a ponta automizadas."*): decisões pendentes na recomendação.
 **Origem:** conversa de 2026-10-23 (*"minha meta é faturar 4mil reais por mês"*; planos da landing)
 
 ## Contexto

@@ -1,5 +1,5 @@
 # REQ-001 — Acesso ao `/gestao-crm` (auth e casca do CRM)
-**Status:** RASCUNHO
+**Status:** APROVADO — Natanael, 2026-10-23, segue a cadeia (*"aprovado, siga todas as cadeias de ponta a ponta automizadas."*): decisões pendentes na recomendação.
 **Origem:** conversa de 2026-10-23 (*"podermos acessa-lo em /gestao-crm"*, *"auth será necessário."*)
 
 ## Contexto

@@ -1,5 +1,5 @@
 # REQ-002 — Captura de leads da landing com origem
-**Status:** RASCUNHO
+**Status:** APROVADO — Natanael, 2026-10-23, segue a cadeia (*"aprovado, siga todas as cadeias de ponta a ponta automizadas."*): decisões pendentes na recomendação.
 **Origem:** conversa de 2026-10-23 (CRM de growth; investimento no Meta)
 
 ## Contexto
