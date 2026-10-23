@@ -20,5 +20,27 @@
                 <a href="#trilha" class="btn btn--link">Ver a trilha</a>
             </div>
         </div>
+
+        <div class="terminal hero__terminal" data-hero-item>
+            <div class="terminal__bar" aria-hidden="true">
+                <span></span><span></span><span></span>
+                <em>~/meu-portfolio</em>
+            </div>
+            <div class="terminal__body" role="img" aria-label="Exemplo ilustrativo do Claude Code construindo um projeto com testes">
+                @foreach ($site['hero']['terminal'] as $line)
+                    <p class="terminal__line terminal__line--{{ $line['type'] }}">
+                        @if ($line['type'] === 'cmd')
+                            <span class="terminal__prompt">{{ $line['prompt'] ?? '$' }}</span>
+                        @elseif ($line['type'] === 'ok')
+                            <span class="terminal__prompt">✓</span>
+                        @else
+                            <span class="terminal__prompt">●</span>
+                        @endif
+                        <span>{{ $line['text'] }}</span>
+                    </p>
+                @endforeach
+                <span class="terminal__cursor" aria-hidden="true"></span>
+            </div>
+        </div>
     </div>
 </section>
