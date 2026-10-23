@@ -17,10 +17,30 @@ return [
     ],
 
     'hero' => [
+        'eyebrow' => 'Mentoria prática em Claude Code',
         'title' => 'Aprenda vibe coding',
         'accent' => 'do jeito certo',
         'suffix' => 'e conquiste sua vaga',
+        'terminal' => [
+            ['type' => 'cmd', 'text' => 'claude'],
+            ['type' => 'cmd', 'prompt' => '>', 'text' => 'cria a API de vagas com testes'],
+            ['type' => 'out', 'text' => 'Lendo CLAUDE.md e as regras do projeto'],
+            ['type' => 'out', 'text' => 'Plano: rotas, validação, testes e deploy'],
+            ['type' => 'out', 'text' => 'Skill "seguranca" revisando os endpoints'],
+            ['type' => 'out', 'text' => 'git commit -m "feat: api de vagas"'],
+            ['type' => 'ok', 'text' => '12 testes passando. Pronto pro portfólio.'],
+        ],
         'text' => 'Não basta pedir código pra IA. Aprenda a construir projetos reais com Claude Code, agentes e skills, com Git, segurança e deploy, e monte um portfólio que recrutador leva a sério.',
+        'benefits' => [
+            'Projetos reais publicados no seu GitHub',
+            'Git, testes, segurança e deploy desde o primeiro dia',
+            'Portfólio pronto pra mostrar na entrevista',
+        ],
+        'note' => 'Primeira conversa rápida e sem compromisso.',
+        'proof' => [
+            ['tone' => 'violet', 'text' => 'Revisão de segurança'],
+            ['tone' => 'ok', 'text' => 'Deploy em produção'],
+        ],
     ],
 
     'modules' => [

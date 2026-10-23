@@ -24,7 +24,6 @@ if (motion) {
     initIntro();
     initScrollReveals();
     initTerminal();
-    initGitGraph();
 }
 
 /* ---------- Nav: fundo ao rolar + link da seção ativa ---------- */
@@ -163,27 +162,6 @@ function initTerminal() {
     });
 
     ScrollTrigger.create({ trigger: terminal, start: 'top 75%', once: true, onEnter: () => tl.play() });
-}
-
-/* ---------- Hero: histórico do Git desenhado pixel a pixel, em loop ---------- */
-function initGitGraph() {
-    const graph = document.querySelector('[data-git-graph]');
-    if (!graph) return;
-
-    const parts = $$('[data-draw], [data-node]', graph);
-    const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.4, delay: 1.6 });
-
-    tl.set(parts, { autoAlpha: 0 });
-
-    parts.forEach((part) => {
-        if (part.hasAttribute('data-draw')) {
-            tl.fromTo(part, { autoAlpha: 1, strokeDasharray: 1, strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.5, ease: 'steps(8)' }, '-=0.1');
-        } else {
-            tl.fromTo(part, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.15, ease: 'steps(2)' });
-        }
-    });
-
-    tl.to(parts, { autoAlpha: 0, duration: 0.3, ease: 'steps(3)' }, '+=2.4');
 }
 
 /* ---------- Micro-interações ---------- */

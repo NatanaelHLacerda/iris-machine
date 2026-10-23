@@ -182,25 +182,45 @@ button, input, select, textarea { font: inherit; color: inherit; }
     padding-block: 64px;
 }
 .hero__copy { display: flex; flex-direction: column; align-items: flex-start; gap: 24px; }
-.hero__title { font-weight: 700; font-size: clamp(2.5rem, 5vw + 1rem, 4.5rem); line-height: 1.04; letter-spacing: -0.03em; max-width: 16ch; text-wrap: balance; }
+.hero__title { font-weight: 700; font-size: clamp(2.5rem, 3vw + 1.25rem, 4.5rem); line-height: 1.04; letter-spacing: -0.03em; max-width: 18ch; text-wrap: balance; }
 .hero__text { font-size: clamp(16px, 1.2vw, 19px); color: var(--muted); max-width: 52ch; text-wrap: pretty; }
 .hero__title .accent { white-space: nowrap; }
 .hero__actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .hero__actions .btn { min-height: 56px; padding-inline: 32px; }
-/* histórico do Git em pixel art: grade de 60×36, cada unidade é um pixel */
-.hero__graph { min-height: 0; }
-.git-graph { display: block; width: 100%; height: auto; shape-rendering: crispEdges; }
-.git-graph__line { fill: none; stroke: var(--muted); stroke-width: 1; stroke-linecap: square; stroke-linejoin: miter; }
-.git-graph__line--pink { stroke: var(--pink); }
-.git-graph__line--violet { stroke: var(--violet); }
-.git-graph__node { fill: var(--text); }
-.git-graph__node--pink { fill: var(--pink); }
-.git-graph__node--violet { fill: var(--violet); }
-.git-graph__node--head { fill: #8fe3b0; animation: blink 1s steps(2) infinite; }
-.git-graph__label { font-family: var(--font-mono); font-size: 2.2px; fill: var(--dim); }
-.git-graph__label--pink { fill: var(--pink); }
-.git-graph__label--violet { fill: var(--violet); }
-.git-graph__label--ok { fill: #8fe3b0; }
+.hero__terminal .terminal__body { min-height: 0; }
+
+.hero__eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border: 1px solid var(--line); border-radius: 999px;
+    background: rgba(242, 73, 160, 0.08);
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text);
+}
+.hero__eyebrow-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 0 4px rgba(242, 73, 160, 0.2); }
+.hero__benefits { display: grid; gap: 8px; }
+.hero__benefits li { position: relative; padding-left: 32px; color: var(--text); font-size: 16px; }
+.hero__benefits li::before {
+    content: '✓'; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(143, 227, 176, 0.12); color: #8fe3b0; font-size: 12px; font-weight: 700;
+}
+.hero__note { margin-top: -8px; font-size: 14px; color: var(--dim); }
+
+/* prova visual: o terminal com selos do que o aluno entrega */
+.hero__visual { position: relative; }
+.hero__chip {
+    position: absolute; display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
+    background: rgba(18, 13, 25, 0.92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.8);
+    font-family: var(--font-mono); font-size: 12px; color: var(--text);
+    animation: float 6s ease-in-out infinite alternate;
+}
+.hero__chip::before { content: ''; width: 8px; height: 8px; border-radius: 2px; }
+.hero__chip--violet { top: -18px; left: 88px; }
+.hero__chip--violet::before { background: var(--violet); }
+.hero__chip--ok { bottom: -16px; left: -24px; animation-delay: -3s; }
+.hero__chip--ok::before { background: #8fe3b0; }
+@keyframes float { from { transform: translateY(0); } to { transform: translateY(-8px); } }
 
 /* palavras do título (geradas pelo JS) */
 .word { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.12em; margin-bottom: -0.12em; }
@@ -376,6 +396,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
     .hero { min-height: 0; }
     .hero__inner { grid-template-columns: minmax(0, 1fr); gap: 48px; padding-block: 40px 56px; }
     .hero__actions .btn { width: 100%; }
+    .hero__chip--ok { left: 16px; }
+    .hero__chip--violet { display: none; }
+    .hero__note { text-align: center; align-self: stretch; }
     .split { grid-template-columns: minmax(0, 1fr); }
     .plans { grid-template-columns: minmax(0, 1fr); }
     .audience { grid-template-columns: repeat(2, 1fr); }
