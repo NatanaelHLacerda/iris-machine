@@ -1,6 +1,6 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { fillAttributionFields } from './tracking';
+import { fillAttributionFields, initTracking } from './tracking';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -18,6 +18,7 @@ initNav();
 initFaq();
 initPlanLinks();
 initLeadForm();
+initTracking();
 
 if (motion) {
     initGlow();

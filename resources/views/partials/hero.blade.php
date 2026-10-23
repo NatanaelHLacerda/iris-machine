@@ -20,7 +20,7 @@
             </ul>
 
             <div class="hero__actions" data-hero-item>
-                <a href="#agendar" class="btn btn--primary" data-magnetic>
+                <a href="#agendar" class="btn btn--primary" data-magnetic data-track="hero">
                     Agendar conversa <span class="btn__arrow" aria-hidden="true">→</span>
                 </a>
                 <a href="#trilha" class="btn btn--link">Ver a trilha</a>

@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias(['noindex' => NoIndex::class]);
+        $middleware->validateCsrfTokens(except: ['e']);
         $middleware->redirectGuestsTo(fn () => route('crm.login'));
         $middleware->redirectUsersTo(fn () => route('crm.dashboard'));
     })

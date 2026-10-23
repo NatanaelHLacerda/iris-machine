@@ -86,3 +86,93 @@ export function fillAttributionFields(form) {
         input.value = attribution[input.dataset.attribution] ?? '';
     });
 }
+
+/* ---------- Eventos do funil (REQ-003) ---------- */
+
+const SESSION_KEY = 'iris_sid';
+const ENDPOINT = '/e';
+const queue = [];
+
+function getSessionId() {
+    let id = read('sessionStorage', SESSION_KEY);
+    if (!id) {
+        id = uuid();
+        write('sessionStorage', SESSION_KEY, id);
+    }
+    return id;
+}
+
+function shouldTrack() {
+    return !(navigator.globalPrivacyControl === true || navigator.doNotTrack === '1' || window.doNotTrack === '1');
+}
+
+function flush() {
+    if (queue.length === 0) return;
+
+    const { utm_source, utm_campaign, utm_content, utm_term, fbclid, referrer } = getAttribution();
+    const body = JSON.stringify({
+        visitor_id: getVisitorId(),
+        session_id: getSessionId(),
+        attribution: { utm_source, utm_campaign, utm_content, utm_term, fbclid, referrer },
+        events: queue.splice(0, 20),
+    });
+
+    try {
+        const blob = new Blob([body], { type: 'application/json' });
+        if (!navigator.sendBeacon?.(ENDPOINT, blob)) {
+            fetch(ENDPOINT, { method: 'POST', body, keepalive: true, headers: { 'Content-Type': 'application/json' } }).catch(() => {});
+        }
+    } catch {
+        /* tracking nunca pode quebrar a página */
+    }
+
+    if (queue.length > 0) flush();
+}
+
+/** Registra um evento; `once` limita a uma vez por sessão. */
+export function track(type, target = null, { once = false } = {}) {
+    if (!shouldTrack()) return;
+
+    if (once) {
+        const key = `iris_once_${type}`;
+        if (read('sessionStorage', key)) return;
+        write('sessionStorage', key, '1');
+    }
+
+    queue.push({ type, target, path: location.pathname });
+}
+
+export function initTracking() {
+    if (!shouldTrack()) return;
+
+    track('page_view');
+
+    document.addEventListener('click', (event) => {
+        const cta = event.target.closest('[data-track], [data-plan]');
+        if (!cta) return;
+        track('cta_click', cta.dataset.track ?? `plan:${cta.dataset.plan}`);
+    });
+
+    const form = document.querySelector('[data-lead-form]');
+    const section = document.querySelector('#agendar');
+
+    if (section && 'IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+            if (entries.some((entry) => entry.isIntersecting)) {
+                track('form_view', null, { once: true });
+                observer.disconnect();
+            }
+        }, { threshold: 0.35 });
+        observer.observe(section);
+    }
+
+    form?.addEventListener('focusin', () => track('form_start', null, { once: true }));
+    form?.addEventListener('lead:sent', () => {
+        track('form_submit');
+        flush();
+    });
+
+    document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && flush());
+    window.addEventListener('pagehide', flush);
+    setInterval(flush, 5000);
+}
