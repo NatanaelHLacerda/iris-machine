@@ -175,6 +175,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
     opacity: .5;
 }
 
+/* ilustração de fundo: apagada, dessaturada e dissolvida nas bordas para não competir com o título */
+.hero__art {
+    position: absolute; top: 0; right: 0; height: 100%; width: min(56vw, 900px); object-fit: cover; object-position: 60% 30%;
+    opacity: .32; filter: saturate(.65) brightness(.85) contrast(.95);
+    mask-image: radial-gradient(75% 80% at 72% 42%, #000 20%, transparent 78%);
+    -webkit-mask-image: radial-gradient(75% 80% at 72% 42%, #000 20%, transparent 78%);
+}
+
 .hero__inner {
     position: relative;
     display: grid; grid-template-columns: minmax(0, 1fr);
@@ -376,6 +384,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @media (max-width: 900px) {
     .nav__links { display: none; }
     .hero { min-height: 0; }
+    .hero__art { width: 100%; opacity: .12; }
     .hero__inner { grid-template-columns: minmax(0, 1fr); gap: 48px; padding-block: 40px 56px; }
     .hero__actions .btn { width: 100%; }
     .hero__note { text-align: center; align-self: stretch; }

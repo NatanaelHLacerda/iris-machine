@@ -3,6 +3,7 @@
         <span class="orb orb--pink"></span>
         <span class="orb orb--violet"></span>
         <span class="grid-lines"></span>
+        <img class="hero__art" src="{{ asset('images/hero-iris.jpg') }}" alt="" width="1024" height="1024" fetchpriority="low">
     </div>
 
     <div class="container hero__inner">
