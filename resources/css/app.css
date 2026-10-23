@@ -177,7 +177,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .hero__inner {
     position: relative;
-    display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    display: grid; grid-template-columns: minmax(0, 1fr);
     gap: 64px; align-items: center;
     padding-block: 64px;
 }
@@ -187,7 +187,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .hero__title .accent { white-space: nowrap; }
 .hero__actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .hero__actions .btn { min-height: 56px; padding-inline: 32px; }
-.hero__terminal .terminal__body { min-height: 0; }
 
 .hero__eyebrow {
     display: inline-flex; align-items: center; gap: 8px;
@@ -204,23 +203,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
     background: rgba(143, 227, 176, 0.12); color: #8fe3b0; font-size: 12px; font-weight: 700;
 }
 .hero__note { margin-top: -8px; font-size: 14px; color: var(--dim); }
-
-/* prova visual: o terminal com selos do que o aluno entrega */
-.hero__visual { position: relative; }
-.hero__chip {
-    position: absolute; display: inline-flex; align-items: center; gap: 8px;
-    padding: 8px 16px; border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
-    background: rgba(18, 13, 25, 0.92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.8);
-    font-family: var(--font-mono); font-size: 12px; color: var(--text);
-    animation: float 6s ease-in-out infinite alternate;
-}
-.hero__chip::before { content: ''; width: 8px; height: 8px; border-radius: 2px; }
-.hero__chip--violet { top: -18px; left: 88px; }
-.hero__chip--violet::before { background: var(--violet); }
-.hero__chip--ok { bottom: -16px; left: -24px; animation-delay: -3s; }
-.hero__chip--ok::before { background: #8fe3b0; }
-@keyframes float { from { transform: translateY(0); } to { transform: translateY(-8px); } }
 
 /* palavras do título (geradas pelo JS) */
 .word { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.12em; margin-bottom: -0.12em; }
@@ -396,8 +378,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
     .hero { min-height: 0; }
     .hero__inner { grid-template-columns: minmax(0, 1fr); gap: 48px; padding-block: 40px 56px; }
     .hero__actions .btn { width: 100%; }
-    .hero__chip--ok { left: 16px; }
-    .hero__chip--violet { display: none; }
     .hero__note { text-align: center; align-self: stretch; }
     .split { grid-template-columns: minmax(0, 1fr); }
     .plans { grid-template-columns: minmax(0, 1fr); }
