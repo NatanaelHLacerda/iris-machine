@@ -77,3 +77,8 @@ Ver `spdd/README.md`. Mensagens em pt-BR. Botão primário rosa, item ativo da s
 ## Testes
 
 Feature `Crm/LoginTest`: redirect de convidado, login ok, login inválido, rate limit, logout, logado em `/login`, header noindex. Feature `Crm/CreateAdminCommandTest`: cria admin e recusa e-mail duplicado.
+
+## Sincronização com o código (2026-10-23)
+
+- Componentes Blade anônimos ficaram em `resources/views/components/crm/` (`<x-crm.page-header>` etc.), exigência do Laravel para componentes anônimos; o `<head>` do CRM é o partial `crm/layouts/head.blade.php`.
+- `DashboardController` deixou de ser placeholder no REQ-008.

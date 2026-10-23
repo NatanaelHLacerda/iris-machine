@@ -64,3 +64,8 @@ Ver `spdd/README.md`. Rosa só no destaque da meta e no gargalo; violeta na estr
 ## Testes
 
 Unit: `GoalProgress` (meio do mês, meta batida, último dia), `FunnelMetrics` (taxas, `null`, gargalo, filtro), `Period` (atalhos, anterior), `TopicExtractor`. Feature: cada aba responde 200 com dados de factory, aba inválida → visão geral, alterar meta, convidado → login.
+
+## Sincronização com o código (2026-10-23)
+
+- `GoalStatus` ganhou `Reached` (meta batida). "Ações de hoje" inclui também as conversas agendadas para hoje.
+- Componentes de gráfico: `column-chart`, `line-chart`, `bars`, `funnel-chart`, `kpi`, `dashboard-tabs`, `period-filter` em `resources/views/components/crm/`.

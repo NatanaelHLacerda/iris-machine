@@ -66,3 +66,8 @@ Ver `spdd/README.md`. JS sem dependência nova, módulo ES.
 ## Testes
 
 Feature `StoreTrackingEventsTest`: 204 e grava, tipo inválido descartado, lote > 20 → 422, bot → nada gravado, origin errado → 403, canal derivado da UTM. Unit `BotDetectorTest`.
+
+## Sincronização com o código (2026-10-23)
+
+- O envio do formulário dispara o evento DOM `lead:sent`, que registra `form_submit` e força o `flush` do beacon.
+- `BotDetector` também ignora `facebookexternalhit`, `curl`, `wget` e `python-requests`.

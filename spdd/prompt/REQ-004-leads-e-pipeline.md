@@ -76,3 +76,9 @@ Ver `spdd/README.md`. Rotas: `crm.leads.*`, `crm.pipeline`. Atividades sempre co
 ## Testes
 
 Feature: lista + filtros + resumo, mover etapa com histórico, Perdido sem motivo 422, Fechado recusado, reabrir Perdido, nota, próxima ação, export CSV com filtro, exclusão em cascata, acesso sem login → login. Unit: `LeadPipeline` (regras), `LeadFilters`.
+
+## Sincronização com o código (2026-10-23)
+
+- Novas classes de apoio: `App\Support\Crm\Period` (períodos no fuso de São Paulo, usado por todas as telas) e `LeadTimeline` (une atividades, envios e eventos `page_view`/`cta_click`).
+- Filtro `flag=atrasados|esfriando` e escopos `Lead::overdue()` / `Lead::cooling()` (atalhos do dashboard).
+- Soltar um card em Fechado abre o dossiê com o diálogo de venda (`#venda`).

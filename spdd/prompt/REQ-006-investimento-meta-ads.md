@@ -68,3 +68,8 @@ Ver `spdd/README.md`. ROAS exibido como `2,4×`; CPL/CAC em reais; "—" para `n
 ## Testes
 
 Feature: importar CSV pt-BR e en, reimportar sem duplicar, CSV sem coluna → erro sem gravar, lançamento manual, tela com período vazio mostrando "—". Unit: `AdMetrics` (CPL/CAC/ROAS, divisão por zero, break-even), `UtmKey`, parser de valores BRL.
+
+## Sincronização com o código (2026-10-23)
+
+- `ad_spends.date` é texto `Y-m-d` (dia do Gerenciador, sem fuso) e `adset_key`/`ad_key` usam `''` em vez de `null`, para a chave única funcionar.
+- `is_unprofitable`: CAC > LTV; sem cliente ainda, estima o CAC por CPL ÷ conversão histórica lead → cliente (com ≥ 20 leads); sem lead, gasto > LTV.

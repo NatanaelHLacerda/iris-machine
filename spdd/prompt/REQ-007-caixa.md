@@ -63,3 +63,8 @@ Ver `spdd/README.md`. Entradas em verde-neutro com sinal "+", saídas com "−";
 ## Testes
 
 Feature: saldo com as três fontes, estorno reduz o saldo, extrato com `editable` correto, CRUD manual, sem saldo inicial → "—", rota de edição inexistente para automáticos. Unit: `CashFlow` (resumo do mês, margem `null`, fuso no fim do mês, série de saldo).
+
+## Sincronização com o código (2026-10-23)
+
+- `CashCategory` ganhou `Alunos` (pagamentos no extrato), proibida em lançamento manual.
+- `CashFlow::summary(period)` serve qualquer período; `monthSummary` delega para ele. O model de configuração é `Setting` (tabela `crm_settings`).

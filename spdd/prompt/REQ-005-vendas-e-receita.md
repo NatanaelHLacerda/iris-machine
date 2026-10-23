@@ -77,3 +77,10 @@ Ver `spdd/README.md`. Conversão reais ↔ centavos só em `App\Support\Crm\Mone
 ## Testes
 
 Feature: registrar sessão/mentoria/squad, squad sem valor 422, pagar/estornar, cancelar assinatura, tela de vendas com resumo. Unit: `ChargeGenerator` (idempotência, billing_day, cancelada), `RevenueMetrics` (fuso no fim do mês, MRR, churn, LTV com fallback, upsell), `Money`.
+
+## Sincronização com o código (2026-10-23)
+
+- `payments.refunded_at` nasceu na própria migration de `payments` (o REQ-007 não precisou de migration extra).
+- Cancelar assinatura descarta as cobranças em aberto com vencimento depois do cancelamento.
+- `RevenueMetrics` ganhou `revenue(period)`, `monthlyRevenue`, `mrrAt`, `activeSubscriptionsAt`, `lifetimeMonths`, `newCustomers` e `ticketByPlan` (consumidos pelo REQ-008).
+- Datas sempre convertidas para UTC antes de gravar: o Eloquent grava o horário sem converter o fuso.

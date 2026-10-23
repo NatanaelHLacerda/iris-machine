@@ -78,3 +78,9 @@ Ver `spdd/README.md`. Mensagens de erro em pt-BR (`lang` ou `messages()` no requ
 ## Testes
 
 Feature `StoreLeadTest`: cria lead + submission, 422 por campo, honeypot, dedupe por e-mail com origem preservada, canal `meta` por utm e por fbclid, throttle 429, fallback não-JSON. Unit `ChannelClassifierTest`: tabela de casos.
+
+## Sincronização com o código (2026-10-23)
+
+- `Channel` ganhou `Indicacao` (cadastro manual do REQ-004).
+- Captura de origem e `visitor_id` vivem em `resources/js/tracking.js` (compartilhado com o REQ-003); `app.js` só importa `fillAttributionFields`.
+- Sem JS, os erros por campo voltam renderizados no próprio formulário (`$errors->first`).

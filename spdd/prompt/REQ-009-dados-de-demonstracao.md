@@ -59,3 +59,8 @@ Ver `spdd/README.md`. Dados fictícios em pt-BR (`fake('pt_BR')`), e-mails `@exa
 ## Testes
 
 Feature `DemoCommandTest`: recusa produção; popula com funil coerente e faturamento do último mês na faixa; sem `--fresh` com dados → `FAILURE`. Com `daily_visits` reduzido por parâmetro de teste para rodar rápido.
+
+## Sincronização com o código (2026-10-23)
+
+- Parâmetros calibrados: visitas 15 → 45/dia, gasto 6 → 30 R$/dia, fechamento 0,28 × qualidade, churn 8%/mês; `claude-code-tcc` recebe 32% do gasto e 3% dos leads (fica no vermelho).
+- Teste roda com `--scale=0.4` e verifica coerência das camadas e que todas as telas renderizam com os dados; a faixa de faturamento é conferida no cenário completo (último mês fechado ≈ R$ 3,2 mil, MRR ≈ R$ 4,4 mil).
