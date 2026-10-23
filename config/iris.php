@@ -17,9 +17,10 @@ return [
     ],
 
     'hero' => [
-        'title' => 'Saia do nível júnior usando IA',
+        'title' => 'Aprenda vibe coding',
         'accent' => 'do jeito certo',
-        'text' => 'Consultoria em IA aplicada para desenvolvedores júnior. Aprenda a usar agentes, skills e Claude Code no seu dia a dia, entregue mais rápido e se destaque no time desde o primeiro projeto.',
+        'suffix' => 'e conquiste sua vaga',
+        'text' => 'Não basta pedir código pra IA. Aprenda a construir projetos reais com Claude Code, agentes e skills, com Git, segurança e deploy, e monte um portfólio que recrutador leva a sério.',
     ],
 
     'modules' => [

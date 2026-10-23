@@ -8,7 +8,7 @@
     <div class="container hero__inner">
         <div class="hero__copy">
             <h1 class="hero__title" data-split>
-                {{ $site['hero']['title'] }} <span class="accent">{{ $site['hero']['accent'] }}</span>.
+                {{ $site['hero']['title'] }} <span class="accent">{{ $site['hero']['accent'] }}</span> {{ $site['hero']['suffix'] }}.
             </h1>
 
             <p class="hero__text" data-hero-item>{{ $site['hero']['text'] }}</p>
