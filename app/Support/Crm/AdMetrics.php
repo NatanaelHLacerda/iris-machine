@@ -120,6 +120,7 @@ class AdMetrics
     {
         $cac = $spend !== null && $customers > 0 ? intdiv($spend, $customers) : null;
         $ltv = $this->revenue->ltvCents();
+        $cpl = $spend !== null && $leads > 0 ? intdiv($spend, $leads) : null;
 
         return [
             'spend' => $spend,
@@ -128,13 +129,49 @@ class AdMetrics
             'leads' => $leads,
             'customers' => $customers,
             'revenue' => $revenue,
-            'cpl' => $spend !== null && $leads > 0 ? intdiv($spend, $leads) : null,
+            'cpl' => $cpl,
             'cac' => $cac,
             'roas' => $spend ? round($revenue / $spend, 2) : null,
             'ltv_roas' => $spend ? round($customers * $ltv / $spend, 2) : null,
-            'is_unprofitable' => ($cac !== null && $cac > $ltv) || ($spend !== null && $spend > $ltv && $customers === 0),
+            'is_unprofitable' => $this->isUnprofitable($spend, $cpl, $cac, $customers, $ltv),
         ];
     }
+
+    /**
+     * CAC acima do LTV. Sem cliente ainda, estima o CAC pelo CPL ÷ conversão histórica lead → cliente.
+     */
+    private function isUnprofitable(?int $spend, ?int $cpl, ?int $cac, int $customers, int $ltv): bool
+    {
+        if ($cac !== null) {
+            return $cac > $ltv;
+        }
+
+        if ($spend === null || $customers > 0) {
+            return false;
+        }
+
+        if ($cpl === null) {
+            return $spend > $ltv;
+        }
+
+        $conversion = $this->historicalConversion();
+
+        return $conversion !== null && $cpl / $conversion > $ltv;
+    }
+
+    /**
+     * Conversão lead → cliente de toda a base; null com menos de 20 leads (pouca amostra).
+     */
+    private function historicalConversion(): ?float
+    {
+        return $this->historicalConversion ??= (function () {
+            $leads = Lead::count();
+
+            return $leads < 20 ? null : max(Sale::distinct()->count('lead_id'), 1) / $leads;
+        })();
+    }
+
+    private ?float $historicalConversion = null;
 
     /**
      * @return Collection<int, AdSpend>
