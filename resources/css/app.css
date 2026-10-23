@@ -187,7 +187,20 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .hero__title .accent { white-space: nowrap; }
 .hero__actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .hero__actions .btn { min-height: 56px; padding-inline: 32px; }
-.hero__terminal .terminal__body { min-height: 0; }
+/* histórico do Git em pixel art: grade de 60×36, cada unidade é um pixel */
+.hero__graph { min-height: 0; }
+.git-graph { display: block; width: 100%; height: auto; shape-rendering: crispEdges; }
+.git-graph__line { fill: none; stroke: var(--muted); stroke-width: 1; stroke-linecap: square; stroke-linejoin: miter; }
+.git-graph__line--pink { stroke: var(--pink); }
+.git-graph__line--violet { stroke: var(--violet); }
+.git-graph__node { fill: var(--text); }
+.git-graph__node--pink { fill: var(--pink); }
+.git-graph__node--violet { fill: var(--violet); }
+.git-graph__node--head { fill: #8fe3b0; animation: blink 1s steps(2) infinite; }
+.git-graph__label { font-family: var(--font-mono); font-size: 2.2px; fill: var(--dim); }
+.git-graph__label--pink { fill: var(--pink); }
+.git-graph__label--violet { fill: var(--violet); }
+.git-graph__label--ok { fill: #8fe3b0; }
 
 /* palavras do título (geradas pelo JS) */
 .word { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.12em; margin-bottom: -0.12em; }
