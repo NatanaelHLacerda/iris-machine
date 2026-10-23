@@ -183,7 +183,22 @@ function initRowDialogs() {
     $$('[data-dialog-open][data-action]').forEach((trigger) => {
         trigger.addEventListener('click', () => {
             const form = $('[data-dialog-form]', document.getElementById(trigger.dataset.dialogOpen));
-            if (form) form.action = trigger.dataset.action;
+            if (!form) return;
+            form.action = trigger.dataset.action;
+
+            const method = $('[data-method-field]', form);
+            if (method && trigger.dataset.method) method.value = trigger.dataset.method;
+
+            const values = JSON.parse(trigger.dataset.fill || 'null');
+            if (values) {
+                Object.entries(values).forEach(([name, value]) => {
+                    const field = form.elements.namedItem(name);
+                    if (field) field.value = value;
+                });
+            } else if (trigger.dataset.method === 'POST') {
+                form.reset();
+            }
+            form.dispatchEvent(new Event('dialog:filled'));
         });
     });
     $$('dialog[data-open-on-load]').forEach((dialog) => dialog.showModal());
@@ -234,6 +249,23 @@ function initPeriodFilter() {
     });
 }
 
+/* ---------- Caixa: categorias acompanham o tipo (entrada/saída) ---------- */
+function initCashEntryForm() {
+    const direction = $('[data-direction]');
+    if (!direction) return;
+
+    const category = direction.form.querySelector('[name="category"]');
+    const sync = () => {
+        const options = [...category.options];
+        options.forEach((option) => (option.hidden = option.dataset.for !== direction.value));
+        if (category.selectedOptions[0]?.hidden) category.value = options.find((option) => !option.hidden)?.value ?? '';
+    };
+    direction.addEventListener('change', sync);
+    direction.form.addEventListener('dialog:filled', sync);
+    sync();
+}
+
 initRowDialogs();
+initCashEntryForm();
 initSaleForm();
 initPeriodFilter();

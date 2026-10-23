@@ -4,7 +4,7 @@
 @endphp
 
 <dialog class="modal" id="sale-dialog" @if ($errors->hasAny(['plan', 'amount_cents', 'sold_at', 'method', 'billing_day'])) data-open-on-load @endif>
-    <form method="POST" action="{{ route('crm.leads.sales.store', $lead) }}" data-sale-form data-prices='@json($prices)'>
+    <form method="POST" action="{{ route('crm.leads.sales.store', $lead) }}" data-sale-form data-prices="{{ json_encode($prices) }}">
         @csrf
         <div class="modal__head">Registrar venda · {{ $lead->name }}</div>
         <div class="modal__body form-stack">
