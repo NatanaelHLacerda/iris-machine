@@ -1,6 +1,6 @@
 <header class="nav" data-nav>
     <div class="container nav__inner">
-        <a class="logo" href="{{ route('home') }}" aria-label="Iris Machine — início">IRIS MACHINE</a>
+        <a class="logo" href="{{ route('home') }}" aria-label="Iris Machine, início">IRIS MACHINE</a>
 
         <nav class="nav__links" aria-label="Seções">
             @foreach ($site['nav'] as $link)

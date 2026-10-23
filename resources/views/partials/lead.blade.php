@@ -4,7 +4,7 @@
     <div class="container split split--lead">
         <div data-reveal>
             <h2 class="section__title">Bora marcar <span class="accent">uma conversa</span>?</h2>
-            <p class="section__text">Deixe seu contato e conte rapidinho onde você está. A gente responde para combinar um horário — sem compromisso e sem spam.</p>
+            <p class="section__text">Deixe seu contato e conte rapidinho onde você está. A gente responde para combinar um horário, sem compromisso e sem spam.</p>
 
             <ul class="checklist">
                 <li>Conversa inicial de diagnóstico</li>

@@ -131,7 +131,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .nav__links { display: flex; gap: clamp(18px, 2.4vw, 36px); }
 .nav__links a {
     position: relative; padding: 6px 0;
-    font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+    font-family: var(--font-heading); font-weight: 500; font-size: 15px; color: var(--muted);
     transition: color .18s var(--ease);
 }
 .nav__links a::after {
@@ -185,13 +185,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .hero__actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .hero__actions .btn { min-height: 56px; padding-inline: 32px; }
 
-.hero__eyebrow {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 8px 16px; border: 1px solid var(--line); border-radius: 999px;
-    background: rgba(242, 73, 160, 0.08);
-    font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text);
-}
-.hero__eyebrow-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 0 4px rgba(242, 73, 160, 0.2); }
 .hero__benefits { display: grid; gap: 8px; }
 .hero__benefits li { position: relative; padding-left: 32px; color: var(--text); font-size: 16px; }
 .hero__benefits li::before {
@@ -241,13 +234,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 [data-glow]:hover::before { opacity: 1; }
 
-.card__code { font-family: var(--font-mono); font-weight: 500; font-size: 13px; letter-spacing: 0.2em; color: var(--pink); }
+.card__code { font-family: var(--font-heading); font-weight: 700; font-size: 15px; color: var(--pink); }
 .card__title { font-size: 21px; font-weight: 600; letter-spacing: -0.01em; }
 .card__text { color: var(--muted); font-size: 15px; }
 
 .checklist { display: grid; gap: 10px; margin-top: 8px; }
 .checklist li { position: relative; padding-left: 26px; color: var(--muted); }
-.checklist li::before { content: '›'; position: absolute; left: 4px; top: -1px; color: var(--pink); font-family: var(--font-mono); font-weight: 500; font-size: 17px; }
+.checklist li::before { content: '›'; position: absolute; left: 4px; top: -1px; color: var(--pink); font-family: var(--font-heading); font-weight: 600; font-size: 17px; }
 
 /* ---------- Para quem é ---------- */
 .audience { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
@@ -256,7 +249,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     padding-top: 16px; border-top: 1px solid var(--line);
     font-family: var(--font-heading); font-size: clamp(16px, 1.25vw, 18px); font-weight: 500; line-height: 1.4; text-wrap: balance;
 }
-.audience__num { font-family: var(--font-mono); font-weight: 500; font-size: 13px; letter-spacing: 0.2em; color: var(--pink); }
+.audience__num { font-family: var(--font-heading); font-weight: 700; font-size: 15px; color: var(--pink); }
 
 /* ---------- Terminal ---------- */
 .terminal {
@@ -285,16 +278,16 @@ button, input, select, textarea { font: inherit; color: inherit; }
     box-shadow: 0 30px 80px -40px rgba(242, 73, 160, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 .plan__badge {
-    position: absolute; top: 16px; right: 16px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    position: absolute; top: 16px; right: 16px; font-family: var(--font-heading); font-weight: 600; font-size: 12px;
     padding: 4px 10px; border-radius: 999px; background: var(--pink); color: #fff;
 }
 .plan__name { font-size: 24px; font-weight: 600; letter-spacing: -0.01em; }
 .plan__tagline { color: var(--muted); font-size: 15px; }
 .plan__price { font-family: var(--font-heading); font-weight: 700; font-size: 24px; letter-spacing: -0.01em; padding-block: 6px; color: #fff; }
-.plan__price--ask { font-family: var(--font-mono); font-weight: 400; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+.plan__price--ask { font-size: 18px; color: var(--muted); }
 .plan__features { display: grid; gap: 9px; margin-bottom: 10px; flex: 1; align-content: start; }
 .plan__features li { position: relative; padding-left: 22px; font-size: 15px; color: var(--muted); }
-.plan__features li::before { content: '+'; position: absolute; left: 2px; color: var(--pink); font-family: var(--font-mono); }
+.plan__features li::before { content: '+'; position: absolute; left: 2px; color: var(--pink); font-family: var(--font-heading); font-weight: 600; }
 
 /* ---------- FAQ ---------- */
 .faq { border-top: 1px solid var(--line-soft); }
@@ -331,7 +324,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .form { display: grid; gap: 16px; }
 .field-row { display: grid; align-items: start; grid-template-columns: 1fr 1fr; gap: 16px; }
 .field { display: grid; align-content: start; gap: 7px; min-width: 0; }
-.field label { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.field label { font-size: 14px; font-weight: 500; color: var(--muted); }
 .field label small { text-transform: none; letter-spacing: 0; color: var(--dim); font-size: 11.5px; }
 .field input, .field select, .field textarea {
     width: 100%; padding: 12px 14px; border-radius: var(--radius-sm);
@@ -362,7 +355,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 /* ---------- Footer ---------- */
 .divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(242, 73, 160, 0.28), rgba(123, 108, 246, 0.2), transparent); }
-.footer { padding-block: 24px; font-family: var(--font-mono); font-size: 11.5px; color: var(--dim); letter-spacing: 0.04em; }
+.footer { padding-block: 24px; font-size: 13px; color: var(--dim); }
 .footer__inner { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 
 /* ---------- Responsivo ---------- */

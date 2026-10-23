@@ -7,8 +7,6 @@
 
     <div class="container hero__inner">
         <div class="hero__copy">
-            <p class="hero__eyebrow" data-hero-item><span class="hero__eyebrow-dot" aria-hidden="true"></span>{{ $site['hero']['eyebrow'] }}</p>
-
             <h1 class="hero__title" data-split>
                 {{ $site['hero']['title'] }} <span class="accent">{{ $site['hero']['accent'] }}</span> {{ $site['hero']['suffix'] }}.
             </h1>

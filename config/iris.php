@@ -5,7 +5,7 @@
 | Conteúdo da landing page
 |--------------------------------------------------------------------------
 | Todo o texto da página inicial mora aqui. Para mudar copy, módulos,
-| formatos ou FAQ, edite este arquivo — as views só fazem o loop.
+| formatos ou FAQ, edite este arquivo; as views só fazem o loop.
 */
 
 return [
@@ -17,7 +17,6 @@ return [
     ],
 
     'hero' => [
-        'eyebrow' => 'Mentoria prática em Claude Code',
         'title' => 'Aprenda vibe coding',
         'accent' => 'do jeito certo',
         'suffix' => 'e conquiste sua vaga',
@@ -34,7 +33,7 @@ return [
         [
             'code' => '01',
             'title' => 'Agentes de IA',
-            'text' => 'Entenda o loop de um agente — contexto, ferramentas e verificação — e aprenda a delegar tarefas reais sem perder o controle do código.',
+            'text' => 'Entenda o loop de um agente (contexto, ferramentas e verificação) e aprenda a delegar tarefas reais sem perder o controle do código.',
         ],
         [
             'code' => '02',
@@ -49,7 +48,7 @@ return [
         [
             'code' => '04',
             'title' => 'Automações e MCP',
-            'text' => 'Conecte a IA às ferramentas que você já usa e automatize o trabalho repetitivo — com hooks, MCP e rotinas que rodam sozinhas.',
+            'text' => 'Conecte a IA às ferramentas que você já usa e automatize o trabalho repetitivo com hooks, MCP e rotinas que rodam sozinhas.',
         ],
     ],
 
@@ -103,7 +102,7 @@ return [
     'faq' => [
         [
             'q' => 'Preciso já saber programar?',
-            'a' => 'Sim, o básico. A consultoria é para quem já escreve código — na faculdade, no estágio ou em projetos pessoais — e quer aprender a trabalhar com IA de forma profissional.',
+            'a' => 'Sim, o básico. A consultoria é para quem já escreve código, seja na faculdade, no estágio ou em projetos pessoais, e quer aprender a trabalhar com IA de forma profissional.',
         ],
         [
             'q' => 'Usar IA não vai me impedir de aprender de verdade?',
