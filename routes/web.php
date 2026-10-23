@@ -29,6 +29,10 @@ Route::prefix('gestao-crm')->name('crm.')->middleware('noindex')->group(function
         Route::post('leads/{lead}/vendas', [Crm\LeadSaleController::class, 'store'])->name('leads.sales.store');
 
         Route::get('vendas', [Crm\SaleController::class, 'index'])->name('sales.index');
+
+        Route::get('meta-ads', Crm\AdsController::class)->name('ads');
+        Route::post('meta-ads/importar', [Crm\AdSpendImportController::class, 'store'])->name('ads.import');
+        Route::post('meta-ads/gastos', [Crm\AdSpendController::class, 'store'])->name('ads.store');
         Route::patch('cobrancas/{payment}/pagar', [Crm\PaymentController::class, 'pay'])->name('payments.pay');
         Route::patch('cobrancas/{payment}/estornar', [Crm\PaymentController::class, 'refund'])->name('payments.refund');
         Route::patch('assinaturas/{subscription}/cancelar', [Crm\SubscriptionController::class, 'cancel'])->name('subscriptions.cancel');
