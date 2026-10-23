@@ -75,3 +75,105 @@ initDialogs();
 initConfirm();
 initAutoSubmit();
 initCopy();
+
+/* ---------- Etapa na ficha: mostra motivo/data só quando fazem sentido ---------- */
+function initStatusForm() {
+    const form = $('[data-status-form]');
+    if (!form) return;
+
+    const select = form.querySelector('[name="status"]');
+    const sync = () => $$('[data-show-when]', form).forEach((field) => (field.hidden = field.dataset.showWhen !== select.value));
+    select.addEventListener('change', sync);
+    sync();
+}
+
+/* ---------- Kanban: arrastar muda a etapa; Perdido pede motivo; Fechado abre a venda ---------- */
+function askLostReason() {
+    const dialog = $('#lost-dialog');
+    const form = $('[data-lost-form]');
+    form.reset();
+    dialog.showModal();
+
+    return new Promise((resolve) => {
+        dialog.addEventListener('close', () => {
+            resolve(dialog.returnValue === 'confirm' ? Object.fromEntries(new FormData(form)) : null);
+        }, { once: true });
+    });
+}
+
+function updateCounts(board) {
+    $$('[data-column]', board).forEach((column) => {
+        $('[data-count]', column).textContent = $$('[data-card]', column).length;
+    });
+}
+
+function initBoard() {
+    const board = $('[data-board]');
+    if (!board) return;
+
+    let dragged = null;
+
+    board.addEventListener('dragstart', (event) => {
+        dragged = event.target.closest('[data-card]');
+        if (!dragged) return;
+        dragged.classList.add('is-dragging');
+        event.dataTransfer.effectAllowed = 'move';
+    });
+
+    board.addEventListener('dragend', () => {
+        dragged?.classList.remove('is-dragging');
+        $$('.column.is-over', board).forEach((column) => column.classList.remove('is-over'));
+    });
+
+    $$('[data-column]', board).forEach((column) => {
+        column.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            column.classList.add('is-over');
+        });
+        column.addEventListener('dragleave', () => column.classList.remove('is-over'));
+        column.addEventListener('drop', async (event) => {
+            event.preventDefault();
+            column.classList.remove('is-over');
+            if (!dragged) return;
+
+            const card = dragged;
+            const origin = card.closest('[data-column]');
+            const status = column.dataset.column;
+            if (origin === column) return;
+
+            if (status === 'fechado') {
+                window.location.href = `${card.dataset.showUrl}#venda`;
+                return;
+            }
+
+            const payload = { status };
+            if (status === 'perdido') {
+                const answer = await askLostReason();
+                if (!answer) return;
+                Object.assign(payload, answer);
+            }
+
+            $('.column__body', column).prepend(card);
+            updateCounts(board);
+
+            try {
+                const response = await fetch(card.dataset.url, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': csrfToken() },
+                    body: JSON.stringify(payload),
+                });
+                if (!response.ok) {
+                    const body = await response.json().catch(() => ({}));
+                    throw new Error(body.message ?? 'Não foi possível mover o lead.');
+                }
+            } catch (error) {
+                $('.column__body', origin).prepend(card);
+                updateCounts(board);
+                toast(error.message);
+            }
+        });
+    });
+}
+
+initStatusForm();
+initBoard();

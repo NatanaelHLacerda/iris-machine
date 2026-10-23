@@ -19,5 +19,12 @@ Route::prefix('gestao-crm')->name('crm.')->middleware('noindex')->group(function
     Route::middleware('auth')->group(function () {
         Route::get('/', Crm\DashboardController::class)->name('dashboard');
         Route::post('logout', [Crm\LoginController::class, 'destroy'])->name('logout');
+
+        Route::get('pipeline', Crm\PipelineController::class)->name('pipeline');
+        Route::get('leads/exportar', Crm\LeadExportController::class)->name('leads.export');
+        Route::resource('leads', Crm\LeadController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
+        Route::patch('leads/{lead}/etapa', [Crm\LeadStatusController::class, 'update'])->name('leads.status');
+        Route::post('leads/{lead}/notas', [Crm\LeadNoteController::class, 'store'])->name('leads.notes');
+        Route::patch('leads/{lead}/proxima-acao', [Crm\LeadNextActionController::class, 'update'])->name('leads.next-action');
     });
 });
