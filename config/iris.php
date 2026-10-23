@@ -62,15 +62,15 @@ return [
     ],
 
     /*
-    | 'price' => null exibe "Sob consulta". Preencha (ex.: 'R$ 000') quando
-    | os valores estiverem definidos.
+    | 'price' => null exibe "Sob consulta" discreto; qualquer texto aparece
+    | em destaque.
     */
     'plans' => [
         [
             'slug' => 'sessao',
             'name' => 'Sessão avulsa',
             'tagline' => 'Para destravar um problema específico.',
-            'price' => null,
+            'price' => 'R$ 129,90',
             'features' => ['1 encontro ao vivo', 'Diagnóstico do seu fluxo atual', 'Plano de próximos passos'],
             'featured' => false,
         ],
@@ -78,7 +78,7 @@ return [
             'slug' => 'mentoria',
             'name' => 'Mentoria individual',
             'tagline' => 'A trilha completa, no seu ritmo e no seu projeto.',
-            'price' => null,
+            'price' => 'R$ 399,90',
             'features' => ['Encontros semanais ao vivo', 'Os 4 módulos da trilha', 'Revisão do seu código e das suas skills', 'Suporte entre os encontros'],
             'featured' => true,
         ],
@@ -86,7 +86,7 @@ return [
             'slug' => 'squad',
             'name' => 'Squad',
             'tagline' => 'Para grupos de estudo, turmas e times pequenos.',
-            'price' => null,
+            'price' => 'Sob consulta',
             'features' => ['Encontros em grupo', 'Projeto prático em conjunto', 'Skills compartilhadas pelo grupo'],
             'featured' => false,
         ],
