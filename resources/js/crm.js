@@ -177,3 +177,63 @@ function initBoard() {
 
 initStatusForm();
 initBoard();
+
+/* ---------- Diálogos reutilizados por linha: data-action define o destino do form ---------- */
+function initRowDialogs() {
+    $$('[data-dialog-open][data-action]').forEach((trigger) => {
+        trigger.addEventListener('click', () => {
+            const form = $('[data-dialog-form]', document.getElementById(trigger.dataset.dialogOpen));
+            if (form) form.action = trigger.dataset.action;
+        });
+    });
+    $$('dialog[data-open-on-load]').forEach((dialog) => dialog.showModal());
+}
+
+/* ---------- Venda: valor sugerido pelo plano, campos que dependem do formato ---------- */
+function initSaleForm() {
+    const form = $('[data-sale-form]');
+    if (!form) return;
+
+    const prices = JSON.parse(form.dataset.prices || '{}');
+    const plan = form.querySelector('[name="plan"]');
+    const amount = form.querySelector('[name="amount"]');
+    const recurring = form.querySelector('[name="is_recurring"]');
+    const paid = form.querySelector('[data-paid-toggle]');
+
+    const sync = () => {
+        const isSquad = plan.value === 'squad';
+        $$('[data-squad-only]', form).forEach((el) => (el.hidden = !isSquad));
+        $$('[data-recurring-only]', form).forEach((el) => (el.hidden = !(plan.value === 'mentoria' || (isSquad && recurring.checked))));
+        $$('[data-paid-only]', form).forEach((el) => (el.hidden = !paid.checked));
+    };
+
+    plan.addEventListener('change', () => {
+        amount.value = prices[plan.value] ?? '';
+        sync();
+    });
+    recurring.addEventListener('change', sync);
+    paid.addEventListener('change', sync);
+    sync();
+
+    if (location.hash === '#venda') document.getElementById('sale-dialog')?.showModal();
+}
+
+/* ---------- Filtro de período: atalho envia na hora; personalizado mostra as datas ---------- */
+function initPeriodFilter() {
+    $$('[data-period-form]').forEach((form) => {
+        const select = $('[data-period-select]', form);
+        const custom = $('[data-period-custom]', form);
+        select.addEventListener('change', () => {
+            if (select.value === 'custom') {
+                custom.hidden = false;
+                return;
+            }
+            custom.querySelectorAll('input').forEach((input) => (input.disabled = true));
+            form.requestSubmit();
+        });
+    });
+}
+
+initRowDialogs();
+initSaleForm();
+initPeriodFilter();

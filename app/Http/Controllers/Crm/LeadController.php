@@ -59,7 +59,7 @@ class LeadController extends Controller
 
     public function show(Lead $lead): View
     {
-        $lead->load(['submissions', 'activities.user']);
+        $lead->load(['submissions', 'activities.user', 'sales.subscription', 'sales.payments', 'payments']);
 
         return view('crm.leads.show', [
             'lead' => $lead,

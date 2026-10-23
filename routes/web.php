@@ -26,5 +26,11 @@ Route::prefix('gestao-crm')->name('crm.')->middleware('noindex')->group(function
         Route::patch('leads/{lead}/etapa', [Crm\LeadStatusController::class, 'update'])->name('leads.status');
         Route::post('leads/{lead}/notas', [Crm\LeadNoteController::class, 'store'])->name('leads.notes');
         Route::patch('leads/{lead}/proxima-acao', [Crm\LeadNextActionController::class, 'update'])->name('leads.next-action');
+        Route::post('leads/{lead}/vendas', [Crm\LeadSaleController::class, 'store'])->name('leads.sales.store');
+
+        Route::get('vendas', [Crm\SaleController::class, 'index'])->name('sales.index');
+        Route::patch('cobrancas/{payment}/pagar', [Crm\PaymentController::class, 'pay'])->name('payments.pay');
+        Route::patch('cobrancas/{payment}/estornar', [Crm\PaymentController::class, 'refund'])->name('payments.refund');
+        Route::patch('assinaturas/{subscription}/cancelar', [Crm\SubscriptionController::class, 'cancel'])->name('subscriptions.cancel');
     });
 });
