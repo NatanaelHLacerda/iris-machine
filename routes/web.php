@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\Crm;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\StoreLeadController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+Route::post('leads', StoreLeadController::class)->middleware('throttle:leads')->name('leads.store');
 
 Route::prefix('gestao-crm')->name('crm.')->middleware('noindex')->group(function () {
     Route::middleware('guest')->group(function () {

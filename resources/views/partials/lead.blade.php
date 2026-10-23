@@ -14,29 +14,34 @@
         </div>
 
         <div class="form-card" data-reveal>
-            <div class="form-success" data-lead-success role="status" hidden>
+            <div class="form-success" data-lead-success role="status" @unless (session('lead_sent')) hidden @endunless>
                 <span class="form-success__icon" aria-hidden="true">✓</span>
                 <h3>Contato recebido!</h3>
-                <p data-lead-success-text></p>
+                <p data-lead-success-text>{{ session('lead_sent') }}</p>
             </div>
 
-            <form class="form" method="POST" action="#" data-lead-form novalidate>
+            <form class="form" method="POST" action="{{ route('leads.store') }}" data-lead-form novalidate @if (session('lead_sent')) hidden @endif>
+                @csrf
+                @foreach (['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'referrer', 'landing_path', 'visitor_id'] as $attributionField)
+                    <input type="hidden" name="{{ $attributionField }}" data-attribution="{{ $attributionField }}">
+                @endforeach
+
                 <div class="field">
                     <label for="lead-name">Nome</label>
                     <input id="lead-name" name="name" type="text" autocomplete="name" required maxlength="120" placeholder="Como podemos te chamar?">
-                    <p class="field__error" data-error="name"></p>
+                    <p class="field__error" data-error="name">{{ $errors->first('name') }}</p>
                 </div>
 
                 <div class="field-row">
                     <div class="field">
                         <label for="lead-email">E-mail</label>
                         <input id="lead-email" name="email" type="email" autocomplete="email" required maxlength="160" placeholder="voce@email.com">
-                        <p class="field__error" data-error="email"></p>
+                        <p class="field__error" data-error="email">{{ $errors->first('email') }}</p>
                     </div>
                     <div class="field">
                         <label for="lead-whatsapp">WhatsApp <small>(opcional)</small></label>
                         <input id="lead-whatsapp" name="whatsapp" type="tel" autocomplete="tel" maxlength="30" placeholder="(00) 00000-0000">
-                        <p class="field__error" data-error="whatsapp"></p>
+                        <p class="field__error" data-error="whatsapp">{{ $errors->first('whatsapp') }}</p>
                     </div>
                 </div>
 
@@ -49,7 +54,7 @@
                                 <option value="{{ $value }}">{{ $label }}</option>
                             @endforeach
                         </select>
-                        <p class="field__error" data-error="level"></p>
+                        <p class="field__error" data-error="level">{{ $errors->first('level') }}</p>
                     </div>
                     <div class="field">
                         <label for="lead-plan">Formato de interesse</label>
@@ -59,14 +64,14 @@
                                 <option value="{{ $plan['slug'] }}">{{ $plan['name'] }}</option>
                             @endforeach
                         </select>
-                        <p class="field__error" data-error="plan"></p>
+                        <p class="field__error" data-error="plan">{{ $errors->first('plan') }}</p>
                     </div>
                 </div>
 
                 <div class="field">
                     <label for="lead-goal">O que você quer destravar? <small>(opcional)</small></label>
                     <textarea id="lead-goal" name="goal" rows="3" maxlength="1000" placeholder="Ex.: quero usar agentes no meu TCC sem virar refém da IA"></textarea>
-                    <p class="field__error" data-error="goal"></p>
+                    <p class="field__error" data-error="goal">{{ $errors->first('goal') }}</p>
                 </div>
 
                 <div class="field field--hp" aria-hidden="true">
@@ -74,7 +79,7 @@
                     <input id="lead-site" name="site" type="text" tabindex="-1" autocomplete="off">
                 </div>
 
-                <p class="field__error field__error--form" data-error="form"></p>
+                <p class="field__error field__error--form" data-error="form">@if ($errors->any()) Confira os campos e tente de novo. @endif</p>
 
                 <button class="btn btn--primary btn--block" type="submit">
                     <span data-submit-label>Quero agendar minha conversa</span> <span class="btn__arrow" aria-hidden="true">→</span>

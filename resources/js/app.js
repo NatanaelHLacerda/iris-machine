@@ -1,5 +1,6 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { fillAttributionFields } from './tracking';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -224,10 +225,53 @@ function initPlanLinks() {
     });
 }
 
-/* ---------- Formulário só visual: o envio será ligado ao backend depois ---------- */
+/* ---------- Formulário de lead: envia sem recarregar; sem JS, o POST normal funciona ---------- */
 function initLeadForm() {
     const form = document.querySelector('[data-lead-form]');
     if (!form) return;
 
-    form.addEventListener('submit', (event) => event.preventDefault());
+    const success = document.querySelector('[data-lead-success]');
+    const submit = form.querySelector('[type="submit"]');
+    const errorFor = (field) => form.querySelector(`[data-error="${field}"]`);
+
+    fillAttributionFields(form);
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        form.querySelectorAll('[data-error]').forEach((element) => (element.textContent = ''));
+        submit.disabled = true;
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: new FormData(form),
+            });
+            const body = await response.json().catch(() => ({}));
+
+            if (response.status === 201) {
+                form.dispatchEvent(new CustomEvent('lead:sent', { bubbles: true }));
+                success.querySelector('[data-lead-success-text]').textContent = body.message ?? '';
+                form.hidden = true;
+                success.hidden = false;
+                return;
+            }
+
+            if (response.status === 422 && body.errors) {
+                Object.entries(body.errors).forEach(([field, messages]) => {
+                    const target = errorFor(field) ?? errorFor('form');
+                    target.textContent = messages[0];
+                });
+                return;
+            }
+
+            errorFor('form').textContent = response.status === 429
+                ? 'Muitos envios seguidos. Espere um minuto e tente de novo.'
+                : 'Não conseguimos enviar agora. Tente de novo em instantes.';
+        } catch {
+            errorFor('form').textContent = 'Sem conexão. Confira sua internet e tente de novo.';
+        } finally {
+            submit.disabled = false;
+        }
+    });
 }
