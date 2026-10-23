@@ -92,6 +92,31 @@ class RevenueMetrics
     }
 
     /**
+     * MRR como estava num instante passado (assinaturas iniciadas e ainda não canceladas).
+     */
+    public function mrrAt(CarbonImmutable $moment): int
+    {
+        return (int) $this->activeAt($moment)->sum('monthly_amount_cents');
+    }
+
+    public function activeSubscriptionsAt(CarbonImmutable $moment): int
+    {
+        return $this->activeAt($moment)->count();
+    }
+
+    /**
+     * @return Builder<Subscription>
+     */
+    private function activeAt(CarbonImmutable $moment): Builder
+    {
+        $moment = $moment->utc();
+
+        return Subscription::query()
+            ->where('started_at', '<=', $moment)
+            ->where(fn (Builder $query) => $query->whereNull('canceled_at')->orWhere('canceled_at', '>', $moment));
+    }
+
+    /**
      * Canceladas no mês ÷ ativas no início do mês; null sem base.
      */
     public function churnRate(CarbonImmutable $month): ?float

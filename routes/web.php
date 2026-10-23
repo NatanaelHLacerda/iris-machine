@@ -18,6 +18,8 @@ Route::prefix('gestao-crm')->name('crm.')->middleware('noindex')->group(function
 
     Route::middleware('auth')->group(function () {
         Route::get('/', Crm\DashboardController::class)->name('dashboard');
+        Route::get('dashboard/{tab}', Crm\DashboardController::class)->name('dashboard.tab');
+        Route::put('meta-mensal', [Crm\GoalSettingController::class, 'update'])->name('settings.goal');
         Route::post('logout', [Crm\LoginController::class, 'destroy'])->name('logout');
 
         Route::get('pipeline', Crm\PipelineController::class)->name('pipeline');

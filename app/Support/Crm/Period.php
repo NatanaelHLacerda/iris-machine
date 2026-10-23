@@ -98,6 +98,11 @@ class Period
         ];
     }
 
+    public static function monthName(CarbonImmutable $month): string
+    {
+        return ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][$month->month - 1];
+    }
+
     public static function label(CarbonPeriod $period): string
     {
         $start = CarbonImmutable::instance($period->getStartDate());
