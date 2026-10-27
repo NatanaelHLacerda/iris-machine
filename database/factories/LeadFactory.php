@@ -18,7 +18,13 @@ class LeadFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'name' => fake()->name(),
+            'email' => fake()->safeEmail(),
+            'whatsapp' => fake()->optional()->numerify('(##) #####-####'),
+            'level' => fake()->randomElement(array_keys(config('iris.levels'))),
+            'plan' => fake()->optional()->randomElement(array_column(config('iris.plans'), 'slug')),
+            'goal' => fake()->optional()->sentence(),
+
         ];
     }
 }
