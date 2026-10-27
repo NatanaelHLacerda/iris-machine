@@ -8,6 +8,6 @@
             @endforeach
         </nav>
 
-        <a class="btn btn--ghost btn--sm nav__cta" href="#agendar" data-track="nav">Agendar conversa</a>
+        <a class="btn btn--ghost btn--sm nav__cta" href="#agendar">Agendar conversa</a>
     </div>
 </header>

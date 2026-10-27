@@ -78,8 +78,6 @@ return [
             'name' => 'Sessão avulsa',
             'tagline' => 'Para destravar um problema específico.',
             'price' => 'R$ 129,90',
-            'price_cents' => 12990,
-            'billing' => 'one_time',
             'features' => ['1 encontro ao vivo', 'Diagnóstico do seu fluxo atual', 'Plano de próximos passos'],
             'featured' => false,
         ],
@@ -88,8 +86,6 @@ return [
             'name' => 'Mentoria individual',
             'tagline' => 'A trilha completa, no seu ritmo e no seu projeto.',
             'price' => 'R$ 399,90',
-            'price_cents' => 39990,
-            'billing' => 'monthly',
             'features' => ['Encontros semanais ao vivo', 'Os 4 módulos da trilha', 'Revisão do seu código e das suas skills', 'Suporte entre os encontros'],
             'featured' => true,
         ],
@@ -98,8 +94,6 @@ return [
             'name' => 'Squad',
             'tagline' => 'Para grupos de estudo, turmas e times pequenos.',
             'price' => 'Sob consulta',
-            'price_cents' => null,
-            'billing' => 'custom',
             'features' => ['Encontros em grupo', 'Projeto prático em conjunto', 'Skills compartilhadas pelo grupo'],
             'featured' => false,
         ],
@@ -133,15 +127,6 @@ return [
         'estagiario' => 'Estagiário(a)',
         'junior' => 'Dev júnior',
         'outro' => 'Outro',
-    ],
-
-    /*
-    | Gestão CRM: meta mensal padrão (editável na tela) e duração média
-    | assumida da mentoria até haver histórico suficiente para medir o LTV.
-    */
-    'crm' => [
-        'monthly_goal_cents' => 400000,
-        'default_lifetime_months' => 3,
     ],
 
 ];
