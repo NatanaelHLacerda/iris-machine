@@ -14,13 +14,14 @@
         </div>
 
         <div class="form-card" data-reveal>
-            <div class="form-success" data-lead-success role="status" hidden>
+            <div class="form-success" data-lead-success role="status" @unless (session('lead_ok')) hidden @endunless>
                 <span class="form-success__icon" aria-hidden="true">✓</span>
                 <h3>Contato recebido!</h3>
-                <p data-lead-success-text></p>
+                <p data-lead-success-text>{{ session('lead_ok') }}</p>
             </div>
 
-            <form class="form" method="POST" action="#" data-lead-form novalidate>
+            <form class="form" method="POST" action="{{ route('leads.store') }}" data-lead-form novalidate @if (session('lead_ok')) hidden @endif>
+                @csrf
                 <div class="field">
                     <label for="lead-name">Nome</label>
                     <input id="lead-name" name="name" type="text" autocomplete="name" required maxlength="120" placeholder="Como podemos te chamar?">
@@ -46,7 +47,7 @@
                         <select id="lead-level" name="level" required>
                             <option value="" disabled selected>Selecione</option>
                             @foreach ($site['levels'] as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
+                            <option value="{{ $value }}">{{ $label }}</option>
                             @endforeach
                         </select>
                         <p class="field__error" data-error="level"></p>
@@ -56,7 +57,7 @@
                         <select id="lead-plan" name="plan">
                             <option value="">Ainda não sei</option>
                             @foreach ($site['plans'] as $plan)
-                                <option value="{{ $plan['slug'] }}">{{ $plan['name'] }}</option>
+                            <option value="{{ $plan['slug'] }}">{{ $plan['name'] }}</option>
                             @endforeach
                         </select>
                         <p class="field__error" data-error="plan"></p>
